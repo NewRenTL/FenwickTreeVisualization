@@ -1,6 +1,7 @@
 #include <raylib.h>
 #include <vector>
 #include <string>
+#include <time.h>
 const int screenWidth = 1600;
 const int screenHeight = 900;
 template <class T, class K>
@@ -15,6 +16,7 @@ class FenwickTree
 {
 private:
     int n;
+    std::vector<int> arrayOrigin;
     std::vector<int> tree;
     std::vector<Pair<int, int>> coordenadas;
     std::vector<Pair<int, Pair<int, int>>> coordParents;
@@ -61,6 +63,38 @@ private:
         return -1;
     }
 
+    void ConstructionBITree(std::vector<int> sourceArray)
+    {
+        for (int i = 0; i < n; i++)
+        {
+            coordenadas.push_back(Pair(0, 0));
+        }
+        this->arrayOrigin = sourceArray;
+        int sizeSource = static_cast<int>(sourceArray.size());
+        for (int i = 0; i < sizeSource; i++)
+        {
+            update(i, sourceArray[i]);
+        }
+    }
+
+    // Solo se usa para cuando se hace el push y ya el array esta dentro de la clase;
+    // Y si usas esto significaria que tu ya has limpiado todos los demas vectores excepto el array original
+    void reConstruction()
+    {
+
+        n = static_cast<int>(this->arrayOrigin.size()) + 1;
+        tree = std::vector(n, 0);
+        for (int i = 0; i < n; i++)
+        {
+            coordenadas.push_back(Pair(0, 0));
+        }
+        int sizeSource = static_cast<int>(this->arrayOrigin.size());
+        for (int i = 0; i < sizeSource; i++)
+        {
+            update(i, this->arrayOrigin[i]);
+        }
+    }
+
 public:
     FenwickTree(int size) : n(size + 1), tree(n, 0)
     {
@@ -68,6 +102,11 @@ public:
         {
             coordenadas.push_back(Pair(0, 0));
         }
+    }
+
+    FenwickTree(int size, std::vector<int> &sourceArray) : n(size + 1), tree(n, 0)
+    {
+        ConstructionBITree(sourceArray);
     }
 
     void update(int index, int delta)
@@ -90,6 +129,12 @@ public:
             index = index - g(index);
         }
         return sum;
+    }
+
+    void push(int value)
+    {
+        arrayOrigin.push_back(value);
+        reConstruction();
     }
 
     void DrawTree2()
@@ -168,6 +213,12 @@ public:
     }
     void cleanDraw()
     {
+        this->n = 0;
+        tree.clear();
+        coordenadas.clear();
+        coordParents.clear();
+        coordLineas.clear();
+        levels.clear();
     }
     void draw3()
     {
@@ -182,6 +233,11 @@ public:
             DrawText(std::to_string(tree[i]).c_str(), coordenadas[i].first - 4, coordenadas[i].second - 2, 18, WHITE);
             DrawText(std::to_string(i).c_str(), coordenadas[i].first - 4, coordenadas[i].second + 30, 18, YELLOW);
         }
+    }
+
+    std::vector<int> getArrayOrigin()
+    {
+        return arrayOrigin;
     }
 };
 
@@ -199,8 +255,8 @@ typedef enum
 static const char *processText[] = {
     "CONSTURIR BITREE",
     "BORRAR BITREE",
+    "AGREGAR ELEMENTO",
     "SUMA EN RANGO",
-    "CAMBIAR COLOR",
     "MOSTRAR ARRAY",
 };
 
@@ -222,7 +278,7 @@ int main()
     InitWindow(screenWidth, screenHeight, "Fenwick Tree Visualization");
     InitAudioDevice();
     Music music = LoadMusicStream("./Electroman_Adventures.mp3");
-
+    srand(time(NULL));
     SetTargetFPS(60);
     PlayMusicStream(music);
     int currentProcess = NONE;
@@ -230,32 +286,36 @@ int main()
 
     Rectangle toogleRecs[NUM_PROCESSES] = {0};
     int mouseHoverRec = -1;
-    int xPosArray = 0;
+    // int xPosArray = 0;
     int yPosArray = 0;
     for (int i = 0; i < NUM_PROCESSES; i++)
     {
         Rectangle rectX = {40.0f, (float)(50 + 52 * i), 350, 50};
         yPosArray += (float)(50 + 52 * i);
         toogleRecs[i] = rectX;
-        xPosArray = rectX.x;
+        // xPosArray = rectX.x;
         yPosArray += 50 * 2;
     }
 
     // Ejemplo de un Fenwick Tree representado como un array
-    std::vector<int> array = {2, 1, 1, 3, 2, 3, 4, 5, 6, 7, 8, 9};
+    int pruebaX = 0;
+    std::vector<int> pruebas = {1, 1, 3, 2, 3, 4, 5, 6, 7, 8, 9};
+    std::vector<int> array = {2};
     int size = array.size();
-
-    FenwickTree fenwickTree(size);
+    FenwickTree fenwickTree(size, array);
 
     // Construye el árbol Fenwick con las actualizaciones
+    /*
     for (int i = 0; i < size; ++i)
     {
         fenwickTree.update(i, array[i]);
     }
+    */
 
-    fenwickTree.DrawTree2();
+    // fenwickTree.DrawTree2();
     std::vector<int> ClicksX;
     // Bucle principal
+    bool IsConstruction = false;
     while (!WindowShouldClose())
     {
         UpdateMusicStream(music);
@@ -265,35 +325,100 @@ int main()
             {
                 mouseHoverRec = i;
 
+                int buttomPressed = -1;
+                if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT) && IsMouseButtonReleased(MOUSE_BUTTON_LEFT) == false)
+                {
+                    if (i == 0)
+                    {
+                        buttomPressed = 0;
+                    }
+                    else if (i == 1)
+                    {
+                        buttomPressed = 1;
+                    }
+                    else if (i == 2)
+                    {
+                        // Código para el caso 2
+                        buttomPressed = 2;
+                    }
+                    else if (i == 3)
+                    {
+                        // Código para el caso 3
+                    }
+                    else if (i == 4)
+                    {
+                        // Código para el caso 4
+                    }
+                }
+
+                if (buttomPressed == 0)
+                {
+                    if (i == 0 && verificarIfExistsClick(ClicksX, i) == -1)
+                    {
+                        // Una vez se ha verificado que el click no está
+
+                        // Revisamos si el árbol está construido
+                        // Si no está construido, lo construimos
+                        if (!IsConstruction)
+                        {
+                            // Construimos el árbol BIT
+                            fenwickTree.DrawTree2();
+                            // Decimos que ya está construido
+                            IsConstruction = true;
+                        }
+                        // Se agrega recién el click
+                        ClicksX.push_back(i);
+                    }
+                }
+                else if (buttomPressed == 1)
+                {
+                    int validationNoDraw = verificarIfExistsClick(ClicksX, 0);
+                    if (i == 1 && validationNoDraw != -1 && IsConstruction)
+                    {
+                        ClicksX.erase(ClicksX.begin() + validationNoDraw);
+                    }
+                }
+                else if (buttomPressed == 2)
+                {
+                    // Limpio el arbol de coordenadas,dibujos y demas
+                    if (IsConstruction == true)
+                    {
+
+                        // No dibujo el arbol vacio porque va a ser tan rapido que no se va a ver
+                        // Añado un nuevo elemento al array principal y reconstruyo
+                        if (pruebaX <= static_cast<int>(pruebas.size() - 1))
+                        {
+                            fenwickTree.cleanDraw();
+                            fenwickTree.push(pruebas[pruebaX]);
+                            pruebaX++;
+                            fenwickTree.DrawTree2();
+                        }
+                        else
+                        {
+                            fenwickTree.cleanDraw();
+                            fenwickTree.push(1 + rand() % (3 + 1 - 1));
+                            pruebaX++;
+                            fenwickTree.DrawTree2();
+                        }
+                        // Y listo ya tengo listo mi nuevo arbol con el elemento agregado
+                        // Solo queda que cuando llegue a dibujarlo
+                        
+                    }
+                    else
+                    {
+                        fenwickTree.cleanDraw();
+                        fenwickTree.push(1 + rand() % (3 + 1 - 1));
+                        // Si en caso aun no se habia construido el arbol
+                        // Colocamos que ya se construyo
+                        fenwickTree.DrawTree2();
+                        IsConstruction = true;
+                    }
+                }
+
                 if (IsMouseButtonReleased(MOUSE_BUTTON_LEFT))
                 {
                     currentProcess = i;
                     // textureReload = true;
-                }
-                int validationNoDraw = verificarIfExistsClick(ClicksX,0);
-                if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT) && IsMouseButtonReleased(MOUSE_BUTTON_LEFT) == false)
-                {
-                    switch (i)
-                    {
-                    case 0:
-                        if (verificarIfExistsClick(ClicksX, i) == -1)
-                        {
-                            ClicksX.push_back(i);
-                        }
-                        break;
-                    case 1:
-                        if(validationNoDraw != -1)
-                        {
-                            ClicksX.erase(ClicksX.begin() + validationNoDraw);
-                        }
-                        break;
-                    case 2:
-                        break;
-                    case 3:
-                        break;
-                    case 4:
-                        break;
-                    }
                 }
                 break;
             }
@@ -327,27 +452,32 @@ int main()
             DrawRectangleLines((int)toogleRecs[i].x, (int)toogleRecs[i].y, (int)toogleRecs[i].width, (int)toogleRecs[i].height, ((i == currentProcess) || (i == mouseHoverRec)) ? BLUE : GRAY);
             DrawText(processText[i], (int)(toogleRecs[i].x + toogleRecs[i].width / 2 - MeasureText(processText[i], 20) / 2), (int)toogleRecs[i].y + 11, 20, ((i == currentProcess) || (i == mouseHoverRec)) ? DARKBLUE : DARKGRAY);
         }
-        for (int i = 0; i < size; i++)
+        for (int i = 0; i < static_cast<int>(fenwickTree.getArrayOrigin().size()); i++)
         {
             DrawRectangle(40.0f + i * 50, toogleRecs[NUM_PROCESSES - 1].y + toogleRecs[0].height + 40, 40, 40, BLUE);
-            DrawText(std::to_string(array[i]).c_str(), 40.0f + i * 50 + 5, toogleRecs[NUM_PROCESSES - 1].y + toogleRecs[0].height + 50, 25, WHITE);
+            DrawText(std::to_string(fenwickTree.getArrayOrigin()[i]).c_str(), 40.0f + i * 50 + 5, toogleRecs[NUM_PROCESSES - 1].y + toogleRecs[0].height + 50, 25, WHITE);
         }
 
         DrawText("Fenwick Tree Visualization", 20, 20, 20, WHITE);
         DrawLine(18, 42, screenWidth - 18, 42, WHITE);
         // Dibuja el Fenwick Tree en la ventana
 
-        //fenwickTree.draw3();
+        // fenwickTree.draw3();
 
         for (int i = 0; i < static_cast<int>(ClicksX.size()); i++)
         {
             switch (ClicksX[i])
             {
             case 0:
-                fenwickTree.draw3();
+                if (IsConstruction == true)
+                {
+                    fenwickTree.draw3();
+                }
                 break;
-
+            // El caso 1 ya no es necesario ya que por defecto lo va a ocultar
             case 2:
+                // Dibujo el arbol ya reconstruido con el nuevo elemento
+                fenwickTree.draw3();
                 break;
             }
         }
