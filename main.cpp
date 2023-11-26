@@ -1,9 +1,12 @@
 #include <raylib.h>
 #include <vector>
+#include <mutex>
+#include <condition_variable>
 #include <string>
 #include <time.h>
-const int screenWidth = 1600;
-const int screenHeight = 900;
+#include <thread>
+const int screenWidth = 1800;
+const int screenHeight = 1000;
 template <class T, class K>
 struct Pair
 {
@@ -22,6 +25,8 @@ private:
     std::vector<Pair<int, Pair<int, int>>> coordParents;
     std::vector<Pair<Pair<int, int>, Pair<int, int>>> coordLineas;
     std::vector<Pair<int, Pair<int, int>>> levels;
+    std::vector<Color> colors;
+    std::vector<int> brands;
     // Encontrar el siguiente indice que tiene el bit menos significativo
     int FindNextIndexBITLessSignificant(int index)
     {
@@ -69,6 +74,7 @@ private:
         {
             coordenadas.push_back(Pair(0, 0));
         }
+        this->colors = std::vector(n, BLUE);
         this->arrayOrigin = sourceArray;
         int sizeSource = static_cast<int>(sourceArray.size());
         for (int i = 0; i < sizeSource; i++)
@@ -83,11 +89,16 @@ private:
     {
 
         n = static_cast<int>(this->arrayOrigin.size()) + 1;
+        // ARRAY [0,0,0,0,0,0,0,0,0,0,0 , 0 ];
+        //        0 1 2 3 4 5 6 7 8 9 10  11 ; 12 values
+        // BITREE [0,0,0,0,0,0,0,0,0,0,0 , 0 , 0 ];
+        //        0 1 2 3 4 5 6 7 8 9 10  11  12 ; 13 values
         tree = std::vector(n, 0);
         for (int i = 0; i < n; i++)
         {
             coordenadas.push_back(Pair(0, 0));
         }
+        this->colors = std::vector(n, BLUE);
         int sizeSource = static_cast<int>(this->arrayOrigin.size());
         for (int i = 0; i < sizeSource; i++)
         {
@@ -126,7 +137,8 @@ public:
         while (index > 0)
         {
             sum += tree[index];
-            index = index - g(index);
+            brands.push_back(index);
+            index = index - g(index);       
         }
         return sum;
     }
@@ -147,6 +159,7 @@ public:
             {
 
                 coordenadas[0] = Pair(screenWidth / 2, 80);
+                colors[0] = RED;
                 levels.push_back(Pair(80, Pair(screenWidth / 2, 80)));
                 // DrawCircle(coordenadas[0].first, coordenadas[0].second, 16, YELLOW);
                 // DrawText(std::to_string(tree[i]).c_str(), coordenadas[0].first, coordenadas[0].second, 20, RED);
@@ -181,6 +194,7 @@ public:
                     }
 
                     coordenadas[i] = Pair(newX, newY);
+                    colors[i] = RED;
                     // Aqui colocamos la ultima posición en la que se encuentra el hijo del parent y el parent lo añadimos a la lista de coordParents
                     coordParents.push_back(Pair(FindPrevIndexBITLessSignificant(i), Pair(newX, newY)));
                     // Terminado ahora dibujamos
@@ -201,6 +215,7 @@ public:
                         levels[searchLevelX].second.first = newX;
                     }
                     coordenadas[i] = Pair(newX, newY);
+                    colors[i] = RED;
                     coordParents[indexParent].second = Pair(newX, newY);
                     // DrawCircle(newX, newY, 16, YELLOW);
                     // DrawText(std::to_string(tree[i]).c_str(), newX, newY, 8, RED);
@@ -218,6 +233,7 @@ public:
         coordenadas.clear();
         coordParents.clear();
         coordLineas.clear();
+        colors.clear();
         levels.clear();
     }
     void draw3()
@@ -229,7 +245,7 @@ public:
         }
         for (int i = 0; i < static_cast<int>(coordenadas.size()); i++)
         {
-            DrawCircle(coordenadas[i].first, coordenadas[i].second, 20, RED);
+            DrawCircle(coordenadas[i].first, coordenadas[i].second, 20, colors[i]);
             DrawText(std::to_string(tree[i]).c_str(), coordenadas[i].first - 4, coordenadas[i].second - 2, 18, WHITE);
             DrawText(std::to_string(i).c_str(), coordenadas[i].first - 4, coordenadas[i].second + 30, 18, YELLOW);
         }
@@ -238,6 +254,26 @@ public:
     std::vector<int> getArrayOrigin()
     {
         return arrayOrigin;
+    }
+    void coloringLabels()
+    {
+        for (int i = 0; i < static_cast<int>(brands.size()); i++)
+        {
+            colors[brands[i]] = BLUE;
+            // WaitTime(2);
+        }
+    }
+    void cleanColoring()
+    {
+        for (int i = 0; i < static_cast<int>(brands.size()); i++)
+        {
+            colors[brands[i]] = RED;
+        }
+        brands.clear();
+    }
+    int getN()
+    {
+        return n;
     }
 };
 
@@ -254,10 +290,10 @@ typedef enum
 
 static const char *processText[] = {
     "CONSTURIR BITREE",
-    "BORRAR BITREE",
+    "OCULTAR BITREE",
     "AGREGAR ELEMENTO",
     "SUMA EN RANGO",
-    "MOSTRAR ARRAY",
+    "LIMPIAR ARBOL",
 };
 
 int verificarIfExistsClick(std::vector<int> vectorVerify, int searchValue)
@@ -271,6 +307,10 @@ int verificarIfExistsClick(std::vector<int> vectorVerify, int searchValue)
     }
     return -1;
 }
+//std::mutex mtx;
+//td::condition_variable cv;
+
+
 int main()
 {
 
@@ -278,7 +318,8 @@ int main()
     InitWindow(screenWidth, screenHeight, "Fenwick Tree Visualization");
     InitAudioDevice();
     Music music = LoadMusicStream("./Electroman_Adventures.mp3");
-    srand(time(NULL));
+    //std::thread musicThread(MusicThread, music);
+    srand(time(nullptr));
     SetTargetFPS(60);
     PlayMusicStream(music);
     int currentProcess = NONE;
@@ -300,9 +341,36 @@ int main()
     // Ejemplo de un Fenwick Tree representado como un array
     int pruebaX = 0;
     std::vector<int> pruebas = {1, 1, 3, 2, 3, 4, 5, 6, 7, 8, 9};
-    std::vector<int> array = {2};
-    int size = array.size();
-    FenwickTree fenwickTree(size, array);
+    std::vector<int> array = {2};         // 1 elemento
+    int size = array.size();              // 1
+    FenwickTree fenwickTree(size, array); // el n para el arbol por ahora
+    // seria 1+1 = 2 -> BITREE [0,0]
+    // Construction BITREE[0,0]
+    // lleno mis coordenadas con n =2
+    //  coords[(0,0),(0,0)]
+    //  colors[BLUE,BLUE]
+    //  guardao el array original en mi clase
+    //  arrayOrigin = soruceArray;
+    //  Ahora construyo mi BITTREE con el tamanio del array original
+    //  nsizearrayorigin = array.originsize = 1;
+    //  Construyo mi BITTREE
+    //
+
+    // Hago una limpieza de todo;
+    //  n = 0,limpio mi tree,limpio mis coords,limpiomisPrents,mislineas
+    //  limpio mis colors y limpio mis levels
+    // Si yo agregara un elemento a mi array original {2} a {2,5}
+    // Activo Reconstruction
+    // Recurdo que mi array original lo tengo guardado , pusheo el elemento,
+    // recuerda que lo tengo todo limpio
+    //{2,5 } y ya esta pusheado, entones yo
+    //  EL NUEVO tamaño de mi bitree sera 3 porque tengo 2 elementos [0,0,0]
+    //  lleno todas las coordenadas, ahora crearia 3 coordenadas
+    //  lleno los colors [BLUE,BLUE,BLUE] seria los nodos por el momento
+    // Ahora actualizamos nuestro tree
+    // Con los valores de nuestro array pusheado y con su nuevo tamanio
+    // Luego de hacer ese upgrade
+    // Ahora volvemos a dibujar las coordenadas,levels,Lineas
 
     // Construye el árbol Fenwick con las actualizaciones
     /*
@@ -316,17 +384,20 @@ int main()
     std::vector<int> ClicksX;
     // Bucle principal
     bool IsConstruction = false;
+    int indexSumX = -1;
+    int randomX = -1;
     while (!WindowShouldClose())
     {
         UpdateMusicStream(music);
+        //std::unique_lock<std::mutex> lock(mtx);
         for (int i = 0; i < NUM_PROCESSES; i++)
         {
-            if (CheckCollisionPointRec(GetMousePosition(), toogleRecs[i]))
+            if (CheckCollisionPointRec(GetMousePosition(), toogleRecs[i]) || (IsKeyPressed(KEY_ENTER) && (i == currentProcess)))
             {
                 mouseHoverRec = i;
 
                 int buttomPressed = -1;
-                if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT) && IsMouseButtonReleased(MOUSE_BUTTON_LEFT) == false)
+                if ((IsMouseButtonPressed(MOUSE_BUTTON_LEFT) || IsKeyPressed(KEY_ENTER)) && IsMouseButtonReleased(MOUSE_BUTTON_LEFT) == false)
                 {
                     if (i == 0)
                     {
@@ -343,10 +414,12 @@ int main()
                     }
                     else if (i == 3)
                     {
+                        buttomPressed = 3;
                         // Código para el caso 3
                     }
                     else if (i == 4)
                     {
+                        buttomPressed = 4;
                         // Código para el caso 4
                     }
                 }
@@ -371,38 +444,49 @@ int main()
                     }
                 }
                 else if (buttomPressed == 1)
-                {
+                {   /*
                     int validationNoDraw = verificarIfExistsClick(ClicksX, 0);
                     if (i == 1 && validationNoDraw != -1 && IsConstruction)
                     {
-                        ClicksX.erase(ClicksX.begin() + validationNoDraw);
+                        // Se elimina el click 0 para que no se vea el arbol
+                        //ClicksX.erase(ClicksX.begin() + validationNoDraw);
+                        ClicksX.clear();
                     }
+                    */
+                   if(i == 1 && IsConstruction)
+                   {
+                    ClicksX.clear();
+                   }
                 }
                 else if (buttomPressed == 2)
                 {
                     // Limpio el arbol de coordenadas,dibujos y demas
+                    ClicksX.clear();
                     if (IsConstruction == true)
                     {
-
                         // No dibujo el arbol vacio porque va a ser tan rapido que no se va a ver
+
                         // Añado un nuevo elemento al array principal y reconstruyo
-                        if (pruebaX <= static_cast<int>(pruebas.size() - 1))
+                        if (pruebaX <= static_cast<int>(pruebas.size()) - 1)
                         {
+                            //
                             fenwickTree.cleanDraw();
-                            fenwickTree.push(pruebas[pruebaX]);
+                            fenwickTree.push(pruebas[pruebaX]); // Push and Reconstrucion
                             pruebaX++;
                             fenwickTree.DrawTree2();
+                            ClicksX.push_back(i);
                         }
                         else
                         {
+                            // Limpieza
                             fenwickTree.cleanDraw();
-                            fenwickTree.push(1 + rand() % (3 + 1 - 1));
+                            fenwickTree.push(1 + rand() % 3);
                             pruebaX++;
                             fenwickTree.DrawTree2();
+                            ClicksX.push_back(i);
                         }
                         // Y listo ya tengo listo mi nuevo arbol con el elemento agregado
                         // Solo queda que cuando llegue a dibujarlo
-                        
                     }
                     else
                     {
@@ -412,10 +496,34 @@ int main()
                         // Colocamos que ya se construyo
                         fenwickTree.DrawTree2();
                         IsConstruction = true;
+                        ClicksX.push_back(i);
+                    }
+                }
+                else if (buttomPressed == 3)
+                {
+                    if (IsConstruction == true && verificarIfExistsClick(ClicksX, 3) == -1)
+                    {
+                        // Selecciono un indice que se encuentre en dentro del BITree del fenwick
+                        randomX = rand() % static_cast<int>(fenwickTree.getArrayOrigin().size());
+                        // Hallo la suma
+                        indexSumX = fenwickTree.prefixSum(randomX);
+                        // Coloreo las etiquetas durante el recorrido del prefixSum
+                        fenwickTree.coloringLabels();
+                        ClicksX.push_back(i);
+                    }
+                }
+                else if(buttomPressed == 4)
+                {  
+                    int verifyColorOnBlue = verificarIfExistsClick(ClicksX,3);
+                    if(IsConstruction == true &&  verifyColorOnBlue!= -1)
+                    {
+                        fenwickTree.cleanColoring();
+                        ClicksX.erase(ClicksX.begin() + verifyColorOnBlue);
+                        ClicksX.push_back(i);
                     }
                 }
 
-                if (IsMouseButtonReleased(MOUSE_BUTTON_LEFT))
+                if (IsMouseButtonReleased(MOUSE_BUTTON_LEFT) || (IsKeyPressed(KEY_ENTER)))
                 {
                     currentProcess = i;
                     // textureReload = true;
@@ -425,7 +533,7 @@ int main()
             else
                 mouseHoverRec = -1;
         }
-
+        
         if (IsKeyPressed(KEY_DOWN))
         {
             currentProcess++;
@@ -444,6 +552,7 @@ int main()
             }
         }
 
+        //Todo esto se dibuja en un fotograma
         BeginDrawing();
         ClearBackground(BLACK);
         for (int i = 0; i < NUM_PROCESSES; i++)
@@ -452,13 +561,20 @@ int main()
             DrawRectangleLines((int)toogleRecs[i].x, (int)toogleRecs[i].y, (int)toogleRecs[i].width, (int)toogleRecs[i].height, ((i == currentProcess) || (i == mouseHoverRec)) ? BLUE : GRAY);
             DrawText(processText[i], (int)(toogleRecs[i].x + toogleRecs[i].width / 2 - MeasureText(processText[i], 20) / 2), (int)toogleRecs[i].y + 11, 20, ((i == currentProcess) || (i == mouseHoverRec)) ? DARKBLUE : DARKGRAY);
         }
+        std::string textilSum = "IndexSum : " + std::to_string((indexSumX != -1) ? indexSumX : -1);
+        DrawText(textilSum.c_str(), toogleRecs[NUM_PROCESSES - 1].x + toogleRecs[NUM_PROCESSES - 1].width / 4, toogleRecs[NUM_PROCESSES - 1].y + toogleRecs[0].height * 2, 30, WHITE);
+        std::string randomSum = "Random : " + std::to_string((randomX != -1) ? randomX : -1);
+        DrawText(randomSum.c_str(), toogleRecs[NUM_PROCESSES - 1].x + toogleRecs[NUM_PROCESSES - 1].width / 4, toogleRecs[NUM_PROCESSES - 1].y + toogleRecs[0].height * 6, 30, WHITE);
+        
         for (int i = 0; i < static_cast<int>(fenwickTree.getArrayOrigin().size()); i++)
         {
-            DrawRectangle(40.0f + i * 50, toogleRecs[NUM_PROCESSES - 1].y + toogleRecs[0].height + 40, 40, 40, BLUE);
-            DrawText(std::to_string(fenwickTree.getArrayOrigin()[i]).c_str(), 40.0f + i * 50 + 5, toogleRecs[NUM_PROCESSES - 1].y + toogleRecs[0].height + 50, 25, WHITE);
+            // toogleRecs[NUM_PROCESSES - 1].y + toogleRecs[0].height + 40
+            // toogleRecs[NUM_PROCESSES - 1].y + toogleRecs[0].height + 50
+            DrawRectangle(40.0f + i * 50, screenHeight - 100, 40, 40, BLUE);
+            DrawText(std::to_string(fenwickTree.getArrayOrigin()[i]).c_str(), 40.0f + i * 50 + 5, screenHeight - 100, 25, WHITE);
         }
 
-        DrawText("Fenwick Tree Visualization", 20, 20, 20, WHITE);
+        DrawText("Fenwick Tree Visualization", 20, 20, 25, WHITE);
         DrawLine(18, 42, screenWidth - 18, 42, WHITE);
         // Dibuja el Fenwick Tree en la ventana
 
@@ -474,11 +590,18 @@ int main()
                     fenwickTree.draw3();
                 }
                 break;
-            // El caso 1 ya no es necesario ya que por defecto lo va a ocultar
+            // El caso 1 ya no es necesario debido que por defecto lo va a ocultar
             case 2:
                 // Dibujo el arbol ya reconstruido con el nuevo elemento
                 fenwickTree.draw3();
                 break;
+            case 3:
+                fenwickTree.draw3(); // Dibuja antes de la pausa
+                //fenwickTree.cleanColoring(); // Limpia después de la pausa
+                //ClicksX.erase(ClicksX.begin() + verificarIfExistsClick(ClicksX, 3));
+                break;
+            case 4:
+                fenwickTree.draw3();
             }
         }
 
