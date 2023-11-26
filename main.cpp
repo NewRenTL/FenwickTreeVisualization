@@ -3,6 +3,7 @@
 #include <mutex>
 #include <condition_variable>
 #include <string>
+#include <cstring>
 #include <time.h>
 #include <thread>
 const int screenWidth = 1800;
@@ -310,6 +311,7 @@ int verificarIfExistsClick(std::vector<int> vectorVerify, int searchValue)
 //std::mutex mtx;
 //td::condition_variable cv;
 
+#define MAX_INPUT_CHARS 9
 
 int main()
 {
@@ -337,6 +339,19 @@ int main()
         // xPosArray = rectX.x;
         yPosArray += 50 * 2;
     }
+    char inputText1[MAX_INPUT_CHARS + 1] = "\0";
+    char inputText2[MAX_INPUT_CHARS + 1] = "\0";
+    int value1 = 0;
+    int value2 = 0;
+
+
+    Rectangle textBox1 = {screenWidth/2.0f - screenWidth/4.0f, screenHeight-200, 100, 50};
+    Rectangle textBox2 = {screenWidth / 2.0f + screenWidth/4.0f, screenHeight-200, 100, 50};
+    Rectangle submitButton = {screenWidth / 2.0f, screenHeight-200, 120, 50};
+    bool mouseOnText1 = false;
+    bool mouseOnText2 = false;
+    int framesCounter = 0;
+
 
     // Ejemplo de un Fenwick Tree representado como un array
     int pruebaX = 0;
@@ -344,6 +359,7 @@ int main()
     std::vector<int> array = {2};         // 1 elemento
     int size = array.size();              // 1
     FenwickTree fenwickTree(size, array); // el n para el arbol por ahora
+    
     // seria 1+1 = 2 -> BITREE [0,0]
     // Construction BITREE[0,0]
     // lleno mis coordenadas con n =2
@@ -380,6 +396,9 @@ int main()
     }
     */
 
+
+
+
     // fenwickTree.DrawTree2();
     std::vector<int> ClicksX;
     // Bucle principal
@@ -390,6 +409,50 @@ int main()
     {
         UpdateMusicStream(music);
         //std::unique_lock<std::mutex> lock(mtx);
+
+        mouseOnText1 = CheckCollisionPointRec(GetMousePosition(),textBox1);
+        mouseOnText2 = CheckCollisionPointRec(GetMousePosition(),textBox2);
+        if(mouseOnText1 || mouseOnText2)
+        {
+            SetMouseCursor(MOUSE_CURSOR_IBEAM);
+            char *currentInputText= (mouseOnText1)?inputText1:inputText2;
+            int *currentValue =(mouseOnText1)?&value1:&value2;
+            int key =GetCharPressed();
+
+            while (key > 0)
+            {
+                if ((key >= '0' && key <= '9') && (std::strlen(currentInputText) < MAX_INPUT_CHARS))
+                {
+                    currentInputText[std::strlen(currentInputText)] = (char)key;
+                    currentInputText[std::strlen(currentInputText) + 1] = '\0';
+                }
+
+                key = GetCharPressed();
+            }
+             if (IsKeyPressed(KEY_BACKSPACE) && (std::strlen(currentInputText) > 0))
+            {
+                currentInputText[std::strlen(currentInputText) - 1] = '\0';
+            }
+        }
+        else
+        {
+            SetMouseCursor(MOUSE_CURSOR_DEFAULT);
+        }
+        if(mouseOnText1 || mouseOnText2)
+        {
+            framesCounter++;
+        }
+        else
+        {
+            framesCounter = 0;
+        }
+        bool clickOnSubmit = CheckCollisionPointRec(GetMousePosition(),submitButton);
+
+        if(clickOnSubmit && strlen(inputText1)> 0 && strlen(inputText2) >0)
+        {
+            value1 = atoi(inputText1);
+            value2 = atoi(inputText2);
+        }
         for (int i = 0; i < NUM_PROCESSES; i++)
         {
             if (CheckCollisionPointRec(GetMousePosition(), toogleRecs[i]) || (IsKeyPressed(KEY_ENTER) && (i == currentProcess)))
@@ -521,6 +584,8 @@ int main()
                         ClicksX.erase(ClicksX.begin() + verifyColorOnBlue);
                         ClicksX.push_back(i);
                     }
+                    indexSumX =-1;
+                    randomX = -1;
                 }
 
                 if (IsMouseButtonReleased(MOUSE_BUTTON_LEFT) || (IsKeyPressed(KEY_ENTER)))
@@ -561,6 +626,33 @@ int main()
             DrawRectangleLines((int)toogleRecs[i].x, (int)toogleRecs[i].y, (int)toogleRecs[i].width, (int)toogleRecs[i].height, ((i == currentProcess) || (i == mouseHoverRec)) ? BLUE : GRAY);
             DrawText(processText[i], (int)(toogleRecs[i].x + toogleRecs[i].width / 2 - MeasureText(processText[i], 20) / 2), (int)toogleRecs[i].y + 11, 20, ((i == currentProcess) || (i == mouseHoverRec)) ? DARKBLUE : DARKGRAY);
         }
+        /*Evaluando*/
+        DrawRectangleRec(textBox1,LIGHTGRAY);
+        if(mouseOnText1)
+        {
+            DrawRectangleLines((int)textBox1.x,(int)textBox1.y,(int)textBox1.width,(int)textBox1.height,RED);
+        }
+        else
+        {
+            DrawRectangleLines((int)textBox1.x,(int)textBox1.y,(int)textBox1.width,(int)textBox1.height,DARKGRAY);
+        }
+        DrawText(inputText1, (int)textBox1.x + 5, (int)textBox1.y + 8, ((int)textBox1.height)/2+5, MAROON);
+        DrawRectangleRec(textBox2,LIGHTGRAY);
+        if(mouseOnText2)
+        {
+            DrawRectangleLines((int)textBox2.x,(int)textBox2.y,(int)textBox2.width,(int)textBox2.height,RED);
+        }
+        else
+        {
+            DrawRectangleLines((int)textBox2.x,(int)textBox2.y,(int)textBox2.width,(int)textBox2.height,DARKGRAY);
+        }
+        DrawText(inputText2, (int)textBox2.x + 5, (int)textBox2.y + 8, ((int)textBox2.height)/2+5, MAROON);
+        DrawRectangleRec(submitButton,DARKGRAY);
+        DrawRectangleLines((int)submitButton.x, (int)submitButton.y, (int)submitButton.width, (int)submitButton.height, BLACK);
+        DrawText("Submit", (int)submitButton.x + (int)submitButton.width/4, (int)submitButton.y + 10, 20, WHITE);
+       
+        
+        //
         std::string textilSum = "IndexSum : " + std::to_string((indexSumX != -1) ? indexSumX : -1);
         DrawText(textilSum.c_str(), toogleRecs[NUM_PROCESSES - 1].x + toogleRecs[NUM_PROCESSES - 1].width / 4, toogleRecs[NUM_PROCESSES - 1].y + toogleRecs[0].height * 2, 30, WHITE);
         std::string randomSum = "Random : " + std::to_string((randomX != -1) ? randomX : -1);
