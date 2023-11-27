@@ -7,7 +7,7 @@
 #include <time.h>
 #include <thread>
 const int screenWidth = 1800;
-const int screenHeight = 1000;
+const int screenHeight = 1080;
 template <class T, class K>
 struct Pair
 {
@@ -20,17 +20,19 @@ class FenwickTree
 {
 private:
     int n;
-    std::vector<int> arrayOrigin;
-    std::vector<int> tree;
-    std::vector<Pair<int, int>> coordenadas;
-    std::vector<Pair<int, Pair<int, int>>> coordParents;
-    std::vector<Pair<Pair<int, int>, Pair<int, int>>> coordLineas;
+    std::vector<int> arrayOrigin;//Vector para guardar los valores array origial
+    std::vector<int> tree;//Vector array para formar el arbol BIT
+    std::vector<Pair<int, int>> coordenadas; //Para guardar las coordenadas de los nodos
+    std::vector<Pair<int, Pair<int, int>>> coordParents; //Todos los nodos que son padres con sus coordendas ->
+    std::vector<Pair<Pair<int, int>, Pair<int, int>>> coordLineas;//
     std::vector<Pair<int, Pair<int, int>>> levels;
     std::vector<Color> colors;
     std::vector<int> brands;
     // Encontrar el siguiente indice que tiene el bit menos significativo
     int FindNextIndexBITLessSignificant(int index)
     {
+        //Agarra el binario y le resta el bit menos significativo
+
         return index + (index & -index);
     }
     // Encontrar el anterior indice que tiene el bit menos significativo
@@ -75,6 +77,7 @@ private:
         {
             coordenadas.push_back(Pair(0, 0));
         }
+        //VectordeColor
         this->colors = std::vector(n, BLUE);
         this->arrayOrigin = sourceArray;
         int sizeSource = static_cast<int>(sourceArray.size());
@@ -123,7 +126,7 @@ public:
 
     void update(int index, int delta)
     {
-        index = index + 1;
+        index = index + 1;//12 , 13 , [0,[1---------]]
         while (index < n)
         {
             tree[index] += delta;
@@ -144,12 +147,23 @@ public:
         return sum;
     }
 
+    bool isEmptyArrayOrigin()
+    {
+        return (arrayOrigin.size()==0)?true:false;
+    }
+
     void push(int value)
     {
         arrayOrigin.push_back(value);
         reConstruction();
     }
+    void pop()
+    {
+        arrayOrigin.pop_back();
+        reConstruction();
+    }
 
+    //DIBUJAR LOS NODOS Y LAS LINEAS
     void DrawTree2()
     {
         for (int i = 0; i < n; i++)
@@ -278,7 +292,7 @@ public:
     }
 };
 
-#define NUM_PROCESSES 5
+#define NUM_PROCESSES 7
 
 typedef enum
 {
@@ -293,8 +307,10 @@ static const char *processText[] = {
     "CONSTURIR BITREE",
     "OCULTAR BITREE",
     "AGREGAR ELEMENTO",
-    "SUMA EN RANGO",
+    "SUMA INDICE RANDOM",
     "LIMPIAR ARBOL",
+    "BORRAR ELEMENTO",
+    "SUMA RANGO"
 };
 
 int verificarIfExistsClick(std::vector<int> vectorVerify, int searchValue)
@@ -485,6 +501,10 @@ int main()
                         buttomPressed = 4;
                         // Código para el caso 4
                     }
+                    else if(i == 5)
+                    {
+                        buttomPressed = 5;
+                    }
                 }
 
                 if (buttomPressed == 0)
@@ -576,9 +596,10 @@ int main()
                     }
                 }
                 else if(buttomPressed == 4)
-                {  
+                {  //Verifico si hay colores en azul
                     int verifyColorOnBlue = verificarIfExistsClick(ClicksX,3);
-                    if(IsConstruction == true &&  verifyColorOnBlue!= -1)
+                    //Si resulta que se ha presionado el boton 3;
+                    if(IsConstruction == true &&  (verifyColorOnBlue!= -1))
                     {
                         fenwickTree.cleanColoring();
                         ClicksX.erase(ClicksX.begin() + verifyColorOnBlue);
@@ -586,6 +607,17 @@ int main()
                     }
                     indexSumX =-1;
                     randomX = -1;
+                }
+                else if(buttomPressed == 5)
+                {
+                    ClicksX.clear();
+                    if(IsConstruction && fenwickTree.isEmptyArrayOrigin()== false)
+                    {
+                        fenwickTree.cleanDraw();
+                        fenwickTree.pop();
+                        fenwickTree.DrawTree2();
+                        ClicksX.push_back(i);
+                    }
                 }
 
                 if (IsMouseButtonReleased(MOUSE_BUTTON_LEFT) || (IsKeyPressed(KEY_ENTER)))
@@ -693,6 +725,8 @@ int main()
                 //ClicksX.erase(ClicksX.begin() + verificarIfExistsClick(ClicksX, 3));
                 break;
             case 4:
+                fenwickTree.draw3();
+            case 5:
                 fenwickTree.draw3();
             }
         }
