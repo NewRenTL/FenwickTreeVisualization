@@ -20,18 +20,19 @@ class FenwickTree
 {
 private:
     int n;
-    std::vector<int> arrayOrigin;//Vector para guardar los valores array origial
-    std::vector<int> tree;//Vector array para formar el arbol BIT
-    std::vector<Pair<int, int>> coordenadas; //Para guardar las coordenadas de los nodos
-    std::vector<Pair<int, Pair<int, int>>> coordParents; //Todos los nodos que son padres con sus coordendas ->
-    std::vector<Pair<Pair<int, int>, Pair<int, int>>> coordLineas;//
+    std::vector<int> arrayOrigin;                                  // Vector para guardar los valores array origial
+    std::vector<int> tree;                                         // Vector array para formar el arbol BIT
+    std::vector<Pair<int, int>> coordenadas;                       // Para guardar las coordenadas de los nodos
+    std::vector<Pair<int, Pair<int, int>>> coordParents;           // Todos los nodos que son padres con sus coordendas ->
+    std::vector<Pair<Pair<int, int>, Pair<int, int>>> coordLineas; //
     std::vector<Pair<int, Pair<int, int>>> levels;
     std::vector<Color> colors;
     std::vector<int> brands;
+    std::vector<Color> colorsArrayOrigin;
     // Encontrar el siguiente indice que tiene el bit menos significativo
     int FindNextIndexBITLessSignificant(int index)
     {
-        //Agarra el binario y le resta el bit menos significativo
+        // Agarra el binario y le resta el bit menos significativo
 
         return index + (index & -index);
     }
@@ -77,9 +78,10 @@ private:
         {
             coordenadas.push_back(Pair(0, 0));
         }
-        //VectordeColor
+        // VectordeColor
         this->colors = std::vector(n, BLUE);
         this->arrayOrigin = sourceArray;
+        this->colorsArrayOrigin = std::vector(arrayOrigin.size(), BLUE);
         int sizeSource = static_cast<int>(sourceArray.size());
         for (int i = 0; i < sizeSource; i++)
         {
@@ -103,6 +105,7 @@ private:
             coordenadas.push_back(Pair(0, 0));
         }
         this->colors = std::vector(n, BLUE);
+        this->colorsArrayOrigin = std::vector(arrayOrigin.size(), BLUE);
         int sizeSource = static_cast<int>(this->arrayOrigin.size());
         for (int i = 0; i < sizeSource; i++)
         {
@@ -126,7 +129,7 @@ public:
 
     void update(int index, int delta)
     {
-        index = index + 1;//12 , 13 , [0,[1---------]]
+        index = index + 1; // 12 , 13 , [0,[1---------]]
         while (index < n)
         {
             tree[index] += delta;
@@ -142,14 +145,14 @@ public:
         {
             sum += tree[index];
             brands.push_back(index);
-            index = index - g(index);       
+            index = index - g(index);
         }
         return sum;
     }
 
     bool isEmptyArrayOrigin()
     {
-        return (arrayOrigin.size()==0)?true:false;
+        return (arrayOrigin.size() == 0) ? true : false;
     }
 
     void push(int value)
@@ -163,7 +166,7 @@ public:
         reConstruction();
     }
 
-    //DIBUJAR LOS NODOS Y LAS LINEAS
+    // DIBUJAR LOS NODOS Y LAS LINEAS
     void DrawTree2()
     {
         for (int i = 0; i < n; i++)
@@ -270,6 +273,15 @@ public:
     {
         return arrayOrigin;
     }
+    std::vector<Color> getArrayOriginColors()
+    {
+        return colorsArrayOrigin;
+    }
+
+    void setColorArrayOrigin(Color color, int index)
+    {
+        colorsArrayOrigin[index] = color;
+    }
     void coloringLabels()
     {
         for (int i = 0; i < static_cast<int>(brands.size()); i++)
@@ -285,10 +297,16 @@ public:
             colors[brands[i]] = RED;
         }
         brands.clear();
+        colorsArrayOrigin = std::vector(arrayOrigin.size(), BLUE);
     }
     int getN()
     {
         return n;
+    }
+
+    int range_query(int left, int right)
+    {
+        return prefixSum(right) - prefixSum(left - 1);
     }
 };
 
@@ -310,8 +328,7 @@ static const char *processText[] = {
     "SUMA INDICE RANDOM",
     "LIMPIAR ARBOL",
     "BORRAR ELEMENTO",
-    "SUMA RANGO"
-};
+    "SUMA RANGO"};
 
 int verificarIfExistsClick(std::vector<int> vectorVerify, int searchValue)
 {
@@ -324,8 +341,8 @@ int verificarIfExistsClick(std::vector<int> vectorVerify, int searchValue)
     }
     return -1;
 }
-//std::mutex mtx;
-//td::condition_variable cv;
+// std::mutex mtx;
+// td::condition_variable cv;
 
 #define MAX_INPUT_CHARS 9
 
@@ -336,7 +353,7 @@ int main()
     InitWindow(screenWidth, screenHeight, "Fenwick Tree Visualization");
     InitAudioDevice();
     Music music = LoadMusicStream("./Electroman_Adventures.mp3");
-    //std::thread musicThread(MusicThread, music);
+    // std::thread musicThread(MusicThread, music);
     srand(time(nullptr));
     SetTargetFPS(60);
     PlayMusicStream(music);
@@ -357,17 +374,15 @@ int main()
     }
     char inputText1[MAX_INPUT_CHARS + 1] = "\0";
     char inputText2[MAX_INPUT_CHARS + 1] = "\0";
-    int value1 = 0;
-    int value2 = 0;
+    int value1 = -1;
+    int value2 = -1;
 
-
-    Rectangle textBox1 = {screenWidth/2.0f - screenWidth/4.0f, screenHeight-200, 100, 50};
-    Rectangle textBox2 = {screenWidth / 2.0f + screenWidth/4.0f, screenHeight-200, 100, 50};
-    Rectangle submitButton = {screenWidth / 2.0f, screenHeight-200, 120, 50};
+    Rectangle textBox1 = {screenWidth / 2.0f - screenWidth / 4.0f, screenHeight - 200, 100, 50};
+    Rectangle textBox2 = {screenWidth / 2.0f + screenWidth / 4.0f, screenHeight - 200, 100, 50};
+    Rectangle submitButton = {screenWidth / 2.0f, screenHeight - 200, 120, 50};
     bool mouseOnText1 = false;
     bool mouseOnText2 = false;
     int framesCounter = 0;
-
 
     // Ejemplo de un Fenwick Tree representado como un array
     int pruebaX = 0;
@@ -375,7 +390,7 @@ int main()
     std::vector<int> array = {2};         // 1 elemento
     int size = array.size();              // 1
     FenwickTree fenwickTree(size, array); // el n para el arbol por ahora
-    
+
     // seria 1+1 = 2 -> BITREE [0,0]
     // Construction BITREE[0,0]
     // lleno mis coordenadas con n =2
@@ -412,28 +427,29 @@ int main()
     }
     */
 
-
-
-
     // fenwickTree.DrawTree2();
     std::vector<int> ClicksX;
     // Bucle principal
     bool IsConstruction = false;
     int indexSumX = -1;
     int randomX = -1;
+    int indexSumRange = -1;
+    Color colorsInputText[2] = {LIGHTGRAY, LIGHTGRAY};
+    Color textPut[3] = {WHITE, WHITE, WHITE};
+
     while (!WindowShouldClose())
     {
         UpdateMusicStream(music);
-        //std::unique_lock<std::mutex> lock(mtx);
+        // std::unique_lock<std::mutex> lock(mtx);
 
-        mouseOnText1 = CheckCollisionPointRec(GetMousePosition(),textBox1);
-        mouseOnText2 = CheckCollisionPointRec(GetMousePosition(),textBox2);
-        if(mouseOnText1 || mouseOnText2)
+        mouseOnText1 = CheckCollisionPointRec(GetMousePosition(), textBox1);
+        mouseOnText2 = CheckCollisionPointRec(GetMousePosition(), textBox2);
+        if (mouseOnText1 || mouseOnText2)
         {
             SetMouseCursor(MOUSE_CURSOR_IBEAM);
-            char *currentInputText= (mouseOnText1)?inputText1:inputText2;
-            int *currentValue =(mouseOnText1)?&value1:&value2;
-            int key =GetCharPressed();
+            char *currentInputText = (mouseOnText1) ? inputText1 : inputText2;
+            // int *currentValue = (mouseOnText1) ? &value1 : &value2;
+            int key = GetCharPressed();
 
             while (key > 0)
             {
@@ -445,7 +461,7 @@ int main()
 
                 key = GetCharPressed();
             }
-             if (IsKeyPressed(KEY_BACKSPACE) && (std::strlen(currentInputText) > 0))
+            if (IsKeyPressed(KEY_BACKSPACE) && (std::strlen(currentInputText) > 0))
             {
                 currentInputText[std::strlen(currentInputText) - 1] = '\0';
             }
@@ -454,7 +470,7 @@ int main()
         {
             SetMouseCursor(MOUSE_CURSOR_DEFAULT);
         }
-        if(mouseOnText1 || mouseOnText2)
+        if (mouseOnText1 || mouseOnText2)
         {
             framesCounter++;
         }
@@ -462,13 +478,19 @@ int main()
         {
             framesCounter = 0;
         }
-        bool clickOnSubmit = CheckCollisionPointRec(GetMousePosition(),submitButton);
 
-        if(clickOnSubmit && strlen(inputText1)> 0 && strlen(inputText2) >0)
+        /*
+        if (mouseOnText1 || mouseOnText2)
         {
-            value1 = atoi(inputText1);
-            value2 = atoi(inputText2);
+            if (framesCounter / 30 % 2 == 0) // Ajusta el divisor para cambiar la velocidad del parpadeo
+            {
+                char *currentInputText = (mouseOnText1) ? inputText1 : inputText2;
+                DrawText("_",(int)textBox1.x + 8 + MeasureText(currentInputText, 40), (int)textBox1.y + 12, 40, MAROON);
+            }
         }
+        */
+        // bool clickOnSubmit = CheckCollisionPointRec(GetMousePosition(), submitButton);
+
         for (int i = 0; i < NUM_PROCESSES; i++)
         {
             if (CheckCollisionPointRec(GetMousePosition(), toogleRecs[i]) || (IsKeyPressed(KEY_ENTER) && (i == currentProcess)))
@@ -501,9 +523,13 @@ int main()
                         buttomPressed = 4;
                         // Código para el caso 4
                     }
-                    else if(i == 5)
+                    else if (i == 5)
                     {
                         buttomPressed = 5;
+                    }
+                    else if (i == 6)
+                    {
+                        buttomPressed = 6;
                     }
                 }
 
@@ -527,19 +553,19 @@ int main()
                     }
                 }
                 else if (buttomPressed == 1)
-                {   /*
-                    int validationNoDraw = verificarIfExistsClick(ClicksX, 0);
-                    if (i == 1 && validationNoDraw != -1 && IsConstruction)
+                { /*
+                  int validationNoDraw = verificarIfExistsClick(ClicksX, 0);
+                  if (i == 1 && validationNoDraw != -1 && IsConstruction)
+                  {
+                      // Se elimina el click 0 para que no se vea el arbol
+                      //ClicksX.erase(ClicksX.begin() + validationNoDraw);
+                      ClicksX.clear();
+                  }
+                  */
+                    if (i == 1 && IsConstruction)
                     {
-                        // Se elimina el click 0 para que no se vea el arbol
-                        //ClicksX.erase(ClicksX.begin() + validationNoDraw);
                         ClicksX.clear();
                     }
-                    */
-                   if(i == 1 && IsConstruction)
-                   {
-                    ClicksX.clear();
-                   }
                 }
                 else if (buttomPressed == 2)
                 {
@@ -595,28 +621,72 @@ int main()
                         ClicksX.push_back(i);
                     }
                 }
-                else if(buttomPressed == 4)
-                {  //Verifico si hay colores en azul
-                    int verifyColorOnBlue = verificarIfExistsClick(ClicksX,3);
-                    //Si resulta que se ha presionado el boton 3;
-                    if(IsConstruction == true &&  (verifyColorOnBlue!= -1))
+                else if (buttomPressed == 4)
+                { // Verifico si hay colores en azul
+                    int verifyColorOnBlue = verificarIfExistsClick(ClicksX, 3);
+                    int verifyColorOnBlueRange = verificarIfExistsClick(ClicksX, 6);
+                    // Si resulta que se ha presionado el boton 3;
+                    if (IsConstruction == true && (verifyColorOnBlue != -1 || verifyColorOnBlueRange != -1))
                     {
                         fenwickTree.cleanColoring();
-                        ClicksX.erase(ClicksX.begin() + verifyColorOnBlue);
+                        if (verifyColorOnBlue != -1)
+                        {
+                            ClicksX.erase(ClicksX.begin() + verifyColorOnBlue);
+                        }
+                        if (verifyColorOnBlueRange != -1)
+                        {
+                            ClicksX.erase(ClicksX.begin() + verifyColorOnBlueRange);
+                        }
                         ClicksX.push_back(i);
                     }
-                    indexSumX =-1;
+                    textPut[0] = WHITE;
+                    textPut[1] = WHITE;
+                    textPut[2] = WHITE;
+                    indexSumX = -1;
                     randomX = -1;
+                    indexSumRange = -1;
+                    value1 = -1;
+                    value2 = -1;
                 }
-                else if(buttomPressed == 5)
+                else if (buttomPressed == 5)
                 {
                     ClicksX.clear();
-                    if(IsConstruction && fenwickTree.isEmptyArrayOrigin()== false)
+                    if (IsConstruction && fenwickTree.isEmptyArrayOrigin() == false)
                     {
                         fenwickTree.cleanDraw();
                         fenwickTree.pop();
                         fenwickTree.DrawTree2();
                         ClicksX.push_back(i);
+                    }
+                }
+                else if (buttomPressed == 6)
+                {
+                    if (strlen(inputText1) > 0 && strlen(inputText2) > 0 && IsConstruction)
+                    {
+                        value1 = atoi(inputText1);
+                        value2 = atoi(inputText2);
+                        if (value1 < value2 && value2 < static_cast<int>(fenwickTree.getArrayOrigin().size()) && value1 < static_cast<int>(fenwickTree.getArrayOrigin().size()))
+                        {
+                            indexSumRange = fenwickTree.range_query(value1, value2);
+                            colorsInputText[0] = LIGHTGRAY;
+                            colorsInputText[1] = LIGHTGRAY;
+                            fenwickTree.coloringLabels();
+                            ClicksX.push_back(i);
+                            textPut[0] = GREEN;
+                            textPut[1] = GREEN;
+                            textPut[2] = GREEN;
+                        }
+                        else
+                        {
+                            if (value1 > value2 || value1 >= static_cast<int>(fenwickTree.getArrayOrigin().size()))
+                            {
+                                colorsInputText[0] = RED;
+                            }
+                            if (value2 >= static_cast<int>(fenwickTree.getArrayOrigin().size()) || value2 < value1)
+                            {
+                                colorsInputText[1] = RED;
+                            }
+                        }
                     }
                 }
 
@@ -630,7 +700,7 @@ int main()
             else
                 mouseHoverRec = -1;
         }
-        
+
         if (IsKeyPressed(KEY_DOWN))
         {
             currentProcess++;
@@ -649,7 +719,7 @@ int main()
             }
         }
 
-        //Todo esto se dibuja en un fotograma
+        // Todo esto se dibuja en un fotograma
         BeginDrawing();
         ClearBackground(BLACK);
         for (int i = 0; i < NUM_PROCESSES; i++)
@@ -659,43 +729,80 @@ int main()
             DrawText(processText[i], (int)(toogleRecs[i].x + toogleRecs[i].width / 2 - MeasureText(processText[i], 20) / 2), (int)toogleRecs[i].y + 11, 20, ((i == currentProcess) || (i == mouseHoverRec)) ? DARKBLUE : DARKGRAY);
         }
         /*Evaluando*/
-        DrawRectangleRec(textBox1,LIGHTGRAY);
-        if(mouseOnText1)
+        DrawRectangleRec(textBox1, colorsInputText[0]);
+        if (mouseOnText1)
         {
-            DrawRectangleLines((int)textBox1.x,(int)textBox1.y,(int)textBox1.width,(int)textBox1.height,RED);
+            DrawRectangleLines((int)textBox1.x, (int)textBox1.y, (int)textBox1.width, (int)textBox1.height, RED);
         }
         else
         {
-            DrawRectangleLines((int)textBox1.x,(int)textBox1.y,(int)textBox1.width,(int)textBox1.height,DARKGRAY);
+            DrawRectangleLines((int)textBox1.x, (int)textBox1.y, (int)textBox1.width, (int)textBox1.height, DARKGRAY);
         }
-        DrawText(inputText1, (int)textBox1.x + 5, (int)textBox1.y + 8, ((int)textBox1.height)/2+5, MAROON);
-        DrawRectangleRec(textBox2,LIGHTGRAY);
-        if(mouseOnText2)
+        DrawText("Min :", (int)textBox1.x - 80, (int)textBox1.y + 8, ((int)textBox1.height) / 2 + 5, WHITE);
+        DrawText(inputText1, (int)textBox1.x + 5, (int)textBox1.y + 8, ((int)textBox1.height) / 2 + 5, MAROON);
+        DrawRectangleRec(textBox2, colorsInputText[1]);
+        if (mouseOnText2)
         {
-            DrawRectangleLines((int)textBox2.x,(int)textBox2.y,(int)textBox2.width,(int)textBox2.height,RED);
+            DrawRectangleLines((int)textBox2.x, (int)textBox2.y, (int)textBox2.width, (int)textBox2.height, RED);
         }
         else
         {
-            DrawRectangleLines((int)textBox2.x,(int)textBox2.y,(int)textBox2.width,(int)textBox2.height,DARKGRAY);
+            DrawRectangleLines((int)textBox2.x, (int)textBox2.y, (int)textBox2.width, (int)textBox2.height, DARKGRAY);
         }
-        DrawText(inputText2, (int)textBox2.x + 5, (int)textBox2.y + 8, ((int)textBox2.height)/2+5, MAROON);
-        DrawRectangleRec(submitButton,DARKGRAY);
+        DrawText("Max :", (int)textBox2.x - 80, (int)textBox2.y + 8, ((int)textBox2.height) / 2 + 5, WHITE);
+        DrawText(inputText2, (int)textBox2.x + 5, (int)textBox2.y + 8, ((int)textBox2.height) / 2 + 5, MAROON);
+        DrawRectangleRec(submitButton, DARKGRAY);
         DrawRectangleLines((int)submitButton.x, (int)submitButton.y, (int)submitButton.width, (int)submitButton.height, BLACK);
-        DrawText("Submit", (int)submitButton.x + (int)submitButton.width/4, (int)submitButton.y + 10, 20, WHITE);
-       
-        
+        DrawText("Submit", (int)submitButton.x + (int)submitButton.width / 4, (int)submitButton.y + 10, 20, WHITE);
+
         //
-        std::string textilSum = "IndexSum : " + std::to_string((indexSumX != -1) ? indexSumX : -1);
+        std::string textilSum = "Suma Indice : " + std::to_string((indexSumX != -1) ? indexSumX : -1);
         DrawText(textilSum.c_str(), toogleRecs[NUM_PROCESSES - 1].x + toogleRecs[NUM_PROCESSES - 1].width / 4, toogleRecs[NUM_PROCESSES - 1].y + toogleRecs[0].height * 2, 30, WHITE);
-        std::string randomSum = "Random : " + std::to_string((randomX != -1) ? randomX : -1);
-        DrawText(randomSum.c_str(), toogleRecs[NUM_PROCESSES - 1].x + toogleRecs[NUM_PROCESSES - 1].width / 4, toogleRecs[NUM_PROCESSES - 1].y + toogleRecs[0].height * 6, 30, WHITE);
-        
+        std::string randomSum = "Random Indice : " + std::to_string((randomX != -1) ? randomX : -1);
+        DrawText(randomSum.c_str(), toogleRecs[NUM_PROCESSES - 1].x + toogleRecs[NUM_PROCESSES - 1].width / 4, toogleRecs[NUM_PROCESSES - 1].y + toogleRecs[0].height * 3, 30, WHITE);
+
+        std::string sumrange = "SumRange : " + std::to_string((indexSumRange != -1) ? indexSumRange : -1);
+        DrawText(sumrange.c_str(), toogleRecs[NUM_PROCESSES - 1].x + toogleRecs[NUM_PROCESSES - 1].width / 4, toogleRecs[NUM_PROCESSES - 1].y + toogleRecs[0].height * 4, 30, textPut[0]);
+        std::string value1X = "Value 1 Min : " + std::to_string((value1 != -1) ? value1 : -1);
+        DrawText(value1X.c_str(), toogleRecs[NUM_PROCESSES - 1].x + toogleRecs[NUM_PROCESSES - 1].width / 4, toogleRecs[NUM_PROCESSES - 1].y + toogleRecs[0].height * 5, 30, textPut[1]);
+        std::string value2X = "Value 2 Max: " + std::to_string((value2 != -1) ? value2 : -1);
+        DrawText(value2X.c_str(), toogleRecs[NUM_PROCESSES - 1].x + toogleRecs[NUM_PROCESSES - 1].width / 4, toogleRecs[NUM_PROCESSES - 1].y + toogleRecs[0].height * 6, 30, textPut[2]);
         for (int i = 0; i < static_cast<int>(fenwickTree.getArrayOrigin().size()); i++)
         {
             // toogleRecs[NUM_PROCESSES - 1].y + toogleRecs[0].height + 40
             // toogleRecs[NUM_PROCESSES - 1].y + toogleRecs[0].height + 50
-            DrawRectangle(40.0f + i * 50, screenHeight - 100, 40, 40, BLUE);
-            DrawText(std::to_string(fenwickTree.getArrayOrigin()[i]).c_str(), 40.0f + i * 50 + 5, screenHeight - 100, 25, WHITE);
+            int tamanioArrayOriginFw = static_cast<int>(fenwickTree.getArrayOrigin().size());
+            if (value1 != -1 && value2 != -1 && value1 <  tamanioArrayOriginFw && value2 < tamanioArrayOriginFw)
+            {
+                if (i >= value1 && i <= value2)
+                {
+                    DrawRectangle(40.0f + i * 50, screenHeight - 100, 40, 40, GREEN);
+                    DrawText(std::to_string(fenwickTree.getArrayOrigin()[i]).c_str(), 40.0f + i * 50 + 5, screenHeight - 100, 25, WHITE);
+                }
+                else
+                {
+                    DrawRectangle(40.0f + i * 50, screenHeight - 100, 40, 40, BLUE);
+                    DrawText(std::to_string(fenwickTree.getArrayOrigin()[i]).c_str(), 40.0f + i * 50 + 5, screenHeight - 100, 25, WHITE);
+                }
+            }
+            else if(randomX != -1)
+            {
+                if(i<= randomX)
+                {
+                    DrawRectangle(40.0f + i * 50, screenHeight - 100, 40, 40, GREEN);
+                    DrawText(std::to_string(fenwickTree.getArrayOrigin()[i]).c_str(), 40.0f + i * 50 + 5, screenHeight - 100, 25, WHITE);
+                }
+                else
+                {
+                     DrawRectangle(40.0f + i * 50, screenHeight - 100, 40, 40, BLUE);
+                    DrawText(std::to_string(fenwickTree.getArrayOrigin()[i]).c_str(), 40.0f + i * 50 + 5, screenHeight - 100, 25, WHITE);
+                }
+            }
+            else
+            {
+                 DrawRectangle(40.0f + i * 50, screenHeight - 100, 40, 40, BLUE);
+                    DrawText(std::to_string(fenwickTree.getArrayOrigin()[i]).c_str(), 40.0f + i * 50 + 5, screenHeight - 100, 25, WHITE);
+            }
         }
 
         DrawText("Fenwick Tree Visualization", 20, 20, 25, WHITE);
@@ -721,13 +828,18 @@ int main()
                 break;
             case 3:
                 fenwickTree.draw3(); // Dibuja antes de la pausa
-                //fenwickTree.cleanColoring(); // Limpia después de la pausa
-                //ClicksX.erase(ClicksX.begin() + verificarIfExistsClick(ClicksX, 3));
+                // fenwickTree.cleanColoring(); // Limpia después de la pausa
+                // ClicksX.erase(ClicksX.begin() + verificarIfExistsClick(ClicksX, 3));
                 break;
             case 4:
                 fenwickTree.draw3();
+                break;
             case 5:
                 fenwickTree.draw3();
+                break;
+            case 6:
+                fenwickTree.draw3();
+                break;
             }
         }
 
