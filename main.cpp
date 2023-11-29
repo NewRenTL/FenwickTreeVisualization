@@ -6,8 +6,8 @@
 #include <cstring>
 #include <time.h>
 #include <thread>
-const int screenWidth = 1800;
-const int screenHeight = 1080;
+const int screenWidth = 1900;
+const int screenHeight = 950;
 template <class T, class K>
 struct Pair
 {
@@ -36,7 +36,7 @@ private:
 
         return index + (index & -index);
     }
-    // Encontrar el anterior indice que tiene el bit menos significativo
+    // Encontrar el anterior indice qu  e tiene el bit menos significativo
     int FindPrevIndexBITLessSignificant(int index)
     {
         return index - (index & -index);
@@ -164,6 +164,11 @@ public:
     {
         arrayOrigin.pop_back();
         reConstruction();
+    }
+
+    std::vector<int> getTree()
+    {
+        return tree;
     }
 
     // DIBUJAR LOS NODOS Y LAS LINEAS
@@ -344,7 +349,7 @@ int verificarIfExistsClick(std::vector<int> vectorVerify, int searchValue)
 // std::mutex mtx;
 // td::condition_variable cv;
 
-#define MAX_INPUT_CHARS 9
+#define MAX_INPUT_CHARS 4
 
 int main()
 {
@@ -374,18 +379,29 @@ int main()
     }
     char inputText1[MAX_INPUT_CHARS + 1] = "\0";
     char inputText2[MAX_INPUT_CHARS + 1] = "\0";
+    char inputText3[MAX_INPUT_CHARS + 1] = "\0";
+    char inputText4[MAX_INPUT_CHARS + 1] = "\0";
     int value1 = -1;
     int value2 = -1;
+    int value3 = -1;
+    int value4 = -1;
 
-    Rectangle textBox1 = {screenWidth / 2.0f - screenWidth / 4.0f, screenHeight - 200, 100, 50};
-    Rectangle textBox2 = {screenWidth / 2.0f + screenWidth / 4.0f, screenHeight - 200, 100, 50};
-    Rectangle submitButton = {screenWidth / 2.0f, screenHeight - 200, 120, 50};
+    Rectangle textBox1 = {screenWidth / 2.0f - screenWidth / 4.0f, screenHeight - 230, 100, 50};
+    Rectangle textBox2 = {(float)textBox1.x + 200, screenHeight - 230, 100, 50};
+    Rectangle textBox3 = {(float)toogleRecs[2].width + 50, (float)toogleRecs[2].y, 80, 50};
+    Rectangle textBox4 = {(float)textBox3.x + 90, (float)textBox3.y, 80, 50};
+
+    // Rectangle submitButton = {screenWidth / 2.0f, screenHeight - 200, 120, 50};
     bool mouseOnText1 = false;
     bool mouseOnText2 = false;
+    bool mouseOnText3 = false;
+    bool mouseOnText4 = false;
     int framesCounter = 0;
+    int framesCounter2 = 0;
 
     // Ejemplo de un Fenwick Tree representado como un array
     int pruebaX = 0;
+    // std::vector<int> pruebas = {1, 1, 3, 2, 3, 4, 5, 6, 7, 8, 9};
     std::vector<int> pruebas = {1, 1, 3, 2, 3, 4, 5, 6, 7, 8, 9};
     std::vector<int> array = {2};         // 1 elemento
     int size = array.size();              // 1
@@ -434,7 +450,7 @@ int main()
     int indexSumX = -1;
     int randomX = -1;
     int indexSumRange = -1;
-    Color colorsInputText[2] = {LIGHTGRAY, LIGHTGRAY};
+    Color colorsInputText[4] = {LIGHTGRAY, LIGHTGRAY, (Color){90, 238, 46, 255}, (Color){223, 28, 78, 255}};
     Color textPut[3] = {WHITE, WHITE, WHITE};
 
     while (!WindowShouldClose())
@@ -444,6 +460,8 @@ int main()
 
         mouseOnText1 = CheckCollisionPointRec(GetMousePosition(), textBox1);
         mouseOnText2 = CheckCollisionPointRec(GetMousePosition(), textBox2);
+        mouseOnText3 = CheckCollisionPointRec(GetMousePosition(), textBox3);
+        mouseOnText4 = CheckCollisionPointRec(GetMousePosition(), textBox4);
         if (mouseOnText1 || mouseOnText2)
         {
             SetMouseCursor(MOUSE_CURSOR_IBEAM);
@@ -477,6 +495,34 @@ int main()
         else
         {
             framesCounter = 0;
+        }
+        if (mouseOnText3 || mouseOnText4)
+        {
+            SetMouseCursor(MOUSE_CURSOR_IBEAM);
+            char *currentInputText = (mouseOnText3) ? inputText3 : inputText4;
+            int key = GetCharPressed();
+            while (key > 0)
+            {
+                if ((key >= '0' && key <= '9') && (std::strlen(currentInputText) < MAX_INPUT_CHARS))
+                {
+                    currentInputText[std::strlen(currentInputText)] = (char)key;
+                    currentInputText[std::strlen(currentInputText) + 1] = '\0';
+                }
+                key = GetCharPressed();
+            }
+            if (IsKeyPressed(KEY_BACKSPACE) && (std::strlen(currentInputText) > 0))
+            {
+                currentInputText[std::strlen(currentInputText) - 1] = '\0';
+            }
+        }
+
+        if (mouseOnText3 || mouseOnText4)
+        {
+            framesCounter2++;
+        }
+        else
+        {
+            framesCounter2 = 0;
         }
 
         /*
@@ -570,8 +616,9 @@ int main()
                 else if (buttomPressed == 2)
                 {
                     // Limpio el arbol de coordenadas,dibujos y demas
+                    /*
                     ClicksX.clear();
-                    if (IsConstruction == true)
+                    if (IsConstruction == true && strlen(inputText3) <= 0)
                     {
                         // No dibujo el arbol vacio porque va a ser tan rapido que no se va a ver
 
@@ -589,7 +636,7 @@ int main()
                         {
                             // Limpieza
                             fenwickTree.cleanDraw();
-                            fenwickTree.push(1 + rand() % 3);
+                            fenwickTree.push(1 + rand() % 9 + 1 - 1);
                             pruebaX++;
                             fenwickTree.DrawTree2();
                             ClicksX.push_back(i);
@@ -599,13 +646,147 @@ int main()
                     }
                     else
                     {
-                        fenwickTree.cleanDraw();
-                        fenwickTree.push(1 + rand() % (3 + 1 - 1));
-                        // Si en caso aun no se habia construido el arbol
-                        // Colocamos que ya se construyo
-                        fenwickTree.DrawTree2();
-                        IsConstruction = true;
-                        ClicksX.push_back(i);
+                        if (IsConstruction == false && strlen(inputText3) <= 0)
+                        {
+                            fenwickTree.cleanDraw();
+                            fenwickTree.push(1 + rand() % (9 + 1 - 1));
+                            // Si en caso aun no se habia construido el arbol
+                            // Colocamos que ya se construyo
+                            fenwickTree.DrawTree2();
+                            IsConstruction = true;
+                            ClicksX.push_back(i);
+                        }
+                        else if(IsConstruction == false && strlen(inputText3) > 0)
+                        {
+                            value1 = atoi(inputText1);
+                            fenwickTree.cleanDraw();
+                            fenwickTree.push(value1);
+                            // Si en caso aun no se habia construido el arbol
+                            // Colocamos que ya se construyo
+                            fenwickTree.DrawTree2();
+                            IsConstruction = true;
+                            ClicksX.push_back(i);
+                        }
+                        else if(IsConstruction == true && strlen(inputText3) > 0)
+                        {
+                            value1 = atoi(inputText1);
+                            fenwickTree.cleanDraw();
+                            fenwickTree.push(value1);
+                            // Si en caso aun no se habia construido el arbol
+                            // Colocamos que ya se construyo
+                            fenwickTree.DrawTree2();
+                            //IsConstruction = true;
+                            ClicksX.push_back(i);
+                        }
+                    }
+                    */
+                    ClicksX.clear();
+                    if (IsConstruction == true)
+                    {
+                        if (strlen(inputText3) <= 0 && strlen(inputText4) <= 0)
+                        {
+                            if (pruebaX <= static_cast<int>(pruebas.size()) - 1)
+                            {
+                                //
+                                fenwickTree.cleanDraw();
+                                fenwickTree.push(pruebas[pruebaX]); // Push and Reconstrucion
+                                pruebaX++;
+                                fenwickTree.DrawTree2();
+                                ClicksX.push_back(i);
+                            }
+                            else
+                            {
+                                // Limpieza
+                                fenwickTree.cleanDraw();
+                                fenwickTree.push(1 + rand() % 9 + 1 - 1);
+                                fenwickTree.DrawTree2();
+                                ClicksX.push_back(i);
+                            }
+                        }
+                        else
+                        {
+                            if (strlen(inputText3) > 0 && strlen(inputText4) > 0)
+                            {
+
+                                colorsInputText[2] = (Color){231, 17, 17, 255};
+                                colorsInputText[3] = (Color){231, 17, 17, 255};
+                            }
+                            else if (strlen(inputText3) > 0 && strlen(inputText4) <= 0)
+                            {
+                                colorsInputText[2] = (Color){90, 238, 46, 255};
+                                colorsInputText[3] = (Color){223, 28, 78, 255};
+                                value3 = atoi(inputText3);
+                                fenwickTree.cleanDraw();
+                                fenwickTree.push(value3);
+                                fenwickTree.DrawTree2();
+                                ClicksX.push_back(i);
+                            }
+                            else if (strlen(inputText4) > 0 && strlen(inputText3) <= 0)
+                            {
+                                colorsInputText[2] = (Color){90, 238, 46, 255};
+                                colorsInputText[3] = (Color){223, 28, 78, 255};
+                                value4 = atoi(inputText4);
+                                fenwickTree.cleanDraw();
+                                fenwickTree.push(value4-2*value4);
+                                fenwickTree.DrawTree2();
+                                ClicksX.push_back(i);
+                            }
+                        }
+                    }
+                    else
+                    {
+                        if (strlen(inputText3) <= 0)
+                        {
+                            if (pruebaX <= static_cast<int>(pruebas.size()) - 1)
+                            {
+                                //
+                                fenwickTree.cleanDraw();
+                                fenwickTree.push(pruebas[pruebaX]); // Push and Reconstrucion
+                                pruebaX++;
+                                fenwickTree.DrawTree2();
+                                IsConstruction = true;
+                                ClicksX.push_back(i);
+                            }
+                            else
+                            {
+                                // Limpieza
+                                fenwickTree.cleanDraw();
+                                fenwickTree.push(1 + rand() % 9 + 1 - 1);
+                                fenwickTree.DrawTree2();
+                                IsConstruction = true;
+                                ClicksX.push_back(i);
+                            }
+                        }
+                        else
+                        {
+                            if (strlen(inputText3) > 0 && strlen(inputText4) > 0)
+                            {
+                                colorsInputText[2] = (Color){231, 17, 17, 255};
+                                colorsInputText[3] = (Color){231, 17, 17, 255};
+                            }
+                            else if (strlen(inputText3) > 0 && strlen(inputText4) <= 0)
+                            {
+                                colorsInputText[2] = (Color){90, 238, 46, 255};
+                                colorsInputText[3] = (Color){223, 28, 78, 255};
+                                value3 = atoi(inputText3);
+                                fenwickTree.cleanDraw();
+                                fenwickTree.push(value3 - 2*value3);
+                                fenwickTree.DrawTree2();
+                                IsConstruction = true;
+                                ClicksX.push_back(i);
+                            }
+                            else if (strlen(inputText4) > 0 && strlen(inputText3) <= 0)
+                            {
+                                colorsInputText[2] = (Color){90, 238, 46, 255};
+                                colorsInputText[3] = (Color){223, 28, 78, 255};
+                                value4 = atoi(inputText4);
+                                fenwickTree.cleanDraw();
+                                fenwickTree.push(value4 - 2*value4);
+                                fenwickTree.DrawTree2();
+                                IsConstruction = true;
+                                ClicksX.push_back(i);
+                            }
+                        }
                     }
                 }
                 else if (buttomPressed == 3)
@@ -722,6 +903,7 @@ int main()
         // Todo esto se dibuja en un fotograma
         BeginDrawing();
         ClearBackground(BLACK);
+
         for (int i = 0; i < NUM_PROCESSES; i++)
         {
             DrawRectangleRec(toogleRecs[i], ((i == currentProcess) || (i == mouseHoverRec)) ? SKYBLUE : LIGHTGRAY);
@@ -729,6 +911,30 @@ int main()
             DrawText(processText[i], (int)(toogleRecs[i].x + toogleRecs[i].width / 2 - MeasureText(processText[i], 20) / 2), (int)toogleRecs[i].y + 11, 20, ((i == currentProcess) || (i == mouseHoverRec)) ? DARKBLUE : DARKGRAY);
         }
         /*Evaluando*/
+        DrawRectangleRec(textBox3, colorsInputText[2]);
+        if (mouseOnText3)
+        {
+            DrawRectangleLines((int)textBox3.x, (int)textBox3.y, (int)textBox3.width, (int)textBox3.height, RED);
+        }
+        else
+        {
+            DrawRectangleLines((int)textBox3.x, (int)textBox3.y, (int)textBox3.width, (int)textBox3.height, DARKGRAY);
+        }
+        DrawText(inputText3, (int)textBox3.x + 5, (int)textBox3.y + 8, ((int)textBox3.height) / 2 + 5, MAROON);
+
+        DrawRectangleRec(textBox4, colorsInputText[3]);
+        if (mouseOnText4)
+        {
+            DrawRectangleLines((int)textBox4.x, (int)textBox4.y, (int)textBox4.width, (int)textBox4.height, RED);
+        }
+        else
+        {
+            DrawRectangleLines((int)textBox4.x, (int)textBox4.y, (int)textBox4.width, (int)textBox4.height, DARKGRAY);
+        }
+
+
+        DrawText(inputText4, (int)textBox4.x + 5, (int)textBox4.y + 8, ((int)textBox4.height) / 2 + 5, WHITE);
+
         DrawRectangleRec(textBox1, colorsInputText[0]);
         if (mouseOnText1)
         {
@@ -751,9 +957,9 @@ int main()
         }
         DrawText("Max :", (int)textBox2.x - 80, (int)textBox2.y + 8, ((int)textBox2.height) / 2 + 5, WHITE);
         DrawText(inputText2, (int)textBox2.x + 5, (int)textBox2.y + 8, ((int)textBox2.height) / 2 + 5, MAROON);
-        DrawRectangleRec(submitButton, DARKGRAY);
-        DrawRectangleLines((int)submitButton.x, (int)submitButton.y, (int)submitButton.width, (int)submitButton.height, BLACK);
-        DrawText("Submit", (int)submitButton.x + (int)submitButton.width / 4, (int)submitButton.y + 10, 20, WHITE);
+        // DrawRectangleRec(submitButton, DARKGRAY);
+        // DrawRectangleLines((int)submitButton.x, (int)submitButton.y, (int)submitButton.width, (int)submitButton.height, BLACK);
+        // DrawText("Submit", (int)submitButton.x + (int)submitButton.width / 4, (int)submitButton.y + 10, 20, WHITE);
 
         //
         std::string textilSum = "Suma Indice : " + std::to_string((indexSumX != -1) ? indexSumX : -1);
@@ -767,41 +973,50 @@ int main()
         DrawText(value1X.c_str(), toogleRecs[NUM_PROCESSES - 1].x + toogleRecs[NUM_PROCESSES - 1].width / 4, toogleRecs[NUM_PROCESSES - 1].y + toogleRecs[0].height * 5, 30, textPut[1]);
         std::string value2X = "Value 2 Max: " + std::to_string((value2 != -1) ? value2 : -1);
         DrawText(value2X.c_str(), toogleRecs[NUM_PROCESSES - 1].x + toogleRecs[NUM_PROCESSES - 1].width / 4, toogleRecs[NUM_PROCESSES - 1].y + toogleRecs[0].height * 6, 30, textPut[2]);
+
+        // Draw array tree fenwick
+        for (int i = 0; i < static_cast<int>(fenwickTree.getTree().size()); i++)
+        {
+            DrawText(std::to_string(i).c_str(),55.0f + i * 50,screenHeight - 150,22,PURPLE);
+            DrawRectangle(40.0f + i * 50, screenHeight - 130, 40, 40, ORANGE);
+            DrawText(std::to_string(fenwickTree.getTree()[i]).c_str(), 40.0f + i * 50 + 5, screenHeight - 130, 25, WHITE);
+        }
+        // Draw array origin
         for (int i = 0; i < static_cast<int>(fenwickTree.getArrayOrigin().size()); i++)
         {
             // toogleRecs[NUM_PROCESSES - 1].y + toogleRecs[0].height + 40
             // toogleRecs[NUM_PROCESSES - 1].y + toogleRecs[0].height + 50
             int tamanioArrayOriginFw = static_cast<int>(fenwickTree.getArrayOrigin().size());
-            if (value1 != -1 && value2 != -1 && value1 <  tamanioArrayOriginFw && value2 < tamanioArrayOriginFw)
+            if (value1 != -1 && value2 != -1 && value1 < tamanioArrayOriginFw && value2 < tamanioArrayOriginFw)
             {
                 if (i >= value1 && i <= value2)
                 {
-                    DrawRectangle(40.0f + i * 50, screenHeight - 100, 40, 40, GREEN);
-                    DrawText(std::to_string(fenwickTree.getArrayOrigin()[i]).c_str(), 40.0f + i * 50 + 5, screenHeight - 100, 25, WHITE);
+                    DrawRectangle(40.0f + i * 50, screenHeight - 70, 40, 40, GREEN);
+                    DrawText(std::to_string(fenwickTree.getArrayOrigin()[i]).c_str(), 40.0f + i * 50 + 5, screenHeight - 70, 25, WHITE);
                 }
                 else
                 {
-                    DrawRectangle(40.0f + i * 50, screenHeight - 100, 40, 40, BLUE);
-                    DrawText(std::to_string(fenwickTree.getArrayOrigin()[i]).c_str(), 40.0f + i * 50 + 5, screenHeight - 100, 25, WHITE);
+                    DrawRectangle(40.0f + i * 50, screenHeight - 70, 40, 40, BLUE);
+                    DrawText(std::to_string(fenwickTree.getArrayOrigin()[i]).c_str(), 40.0f + i * 50 + 5, screenHeight - 70, 25, WHITE);
                 }
             }
-            else if(randomX != -1)
+            else if (randomX != -1)
             {
-                if(i<= randomX)
+                if (i <= randomX)
                 {
-                    DrawRectangle(40.0f + i * 50, screenHeight - 100, 40, 40, GREEN);
-                    DrawText(std::to_string(fenwickTree.getArrayOrigin()[i]).c_str(), 40.0f + i * 50 + 5, screenHeight - 100, 25, WHITE);
+                    DrawRectangle(40.0f + i * 50, screenHeight - 70, 40, 40, GREEN);
+                    DrawText(std::to_string(fenwickTree.getArrayOrigin()[i]).c_str(), 40.0f + i * 50 + 5, screenHeight - 70, 25, WHITE);
                 }
                 else
                 {
-                     DrawRectangle(40.0f + i * 50, screenHeight - 100, 40, 40, BLUE);
-                    DrawText(std::to_string(fenwickTree.getArrayOrigin()[i]).c_str(), 40.0f + i * 50 + 5, screenHeight - 100, 25, WHITE);
+                    DrawRectangle(40.0f + i * 50, screenHeight - 70, 40, 40, BLUE);
+                    DrawText(std::to_string(fenwickTree.getArrayOrigin()[i]).c_str(), 40.0f + i * 50 + 5, screenHeight - 70, 25, WHITE);
                 }
             }
             else
             {
-                 DrawRectangle(40.0f + i * 50, screenHeight - 100, 40, 40, BLUE);
-                    DrawText(std::to_string(fenwickTree.getArrayOrigin()[i]).c_str(), 40.0f + i * 50 + 5, screenHeight - 100, 25, WHITE);
+                DrawRectangle(40.0f + i * 50, screenHeight - 70, 40, 40, BLUE);
+                DrawText(std::to_string(fenwickTree.getArrayOrigin()[i]).c_str(), 40.0f + i * 50 + 5, screenHeight - 70, 25, WHITE);
             }
         }
 

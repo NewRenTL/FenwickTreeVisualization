@@ -1,0 +1,118 @@
+#include <raylib.h>
+#include <vector>
+#include <cmath>
+#include <string>
+
+// Estructura para representar un nodo del árbol
+struct TreeNode {
+    int value;
+    float x, y;
+};
+
+// Función para dibujar un nodo en la ventana
+void drawNode(TreeNode node) {
+    DrawCircle(node.x, node.y, 20, RED);
+    DrawText(std::to_string(node.value).c_str(), static_cast<int>(node.x) - 5, static_cast<int>(node.y) - 5, 14, WHITE);
+}
+
+// Función para dibujar una línea entre dos nodos
+void drawLine(TreeNode parent, TreeNode child) {
+    DrawLine(parent.x, parent.y, child.x, child.y, WHITE);
+}
+
+// Función para dibujar el árbol MaxHeap en la ventana
+void drawMaxHeap(const std::vector<int>& maxHeap, int i, int n, float x, float y, float xOffset) {
+    if (i < n) {
+        // Dibuja el nodo actual
+        TreeNode currentNode;
+        currentNode.value = maxHeap[i];
+        currentNode.x = x;
+        currentNode.y = y;
+        drawNode(currentNode);
+
+        // Dibuja las líneas hacia los nodos hijos izquierdo y derecho
+        if (2 * i + 1 < n) {
+            TreeNode leftChild;
+            leftChild.value = maxHeap[2 * i + 1];
+            leftChild.x = x - xOffset;
+            leftChild.y = y + 60;
+            drawLine(currentNode, leftChild);
+            drawMaxHeap(maxHeap, 2 * i + 1, n, leftChild.x, leftChild.y, xOffset / 2);
+        }
+        if (2 * i + 2 < n) {
+            TreeNode rightChild;
+            rightChild.value = maxHeap[2 * i + 2];
+            rightChild.x = x + xOffset;
+            rightChild.y = y + 60;
+            drawLine(currentNode, rightChild);
+            drawMaxHeap(maxHeap, 2 * i + 2, n, rightChild.x, rightChild.y, xOffset / 2);
+        }
+    }
+}
+
+int main() {
+    const int screenWidth = 800;
+    const int screenHeight = 600;
+
+    // Configura la ventana de Raylib
+    InitWindow(screenWidth, screenHeight, "MaxHeap Tree Visualization");
+
+    SetTargetFPS(60);
+
+    // Ejemplo de un MaxHeap representado como un array
+    std::vector<int> maxHeap = {90, 15, 10, 7, 12, 2, 7, 3};
+    int n = maxHeap.size();
+
+    // Variables para el nuevo elemento
+    char inputValue[10] = ""; // Para almacenar el valor ingresado en la caja de texto
+    int newElement = 0;       // El nuevo elemento a agregar al MaxHeap
+
+    // Bucle principal
+    while (!WindowShouldClose()) {
+        // Actualiza el nuevo elemento desde la caja de texto
+        newElement = atoi(inputValue);
+
+        BeginDrawing();
+
+        ClearBackground(BLACK);
+
+        // Dibuja el árbol MaxHeap en la ventana
+        drawMaxHeap(maxHeap, 0, n, screenWidth / 2, 50, screenWidth / 4);
+
+        // Dibuja la caja de texto y el botón
+        DrawRectangle(screenWidth - 210, 50, 200, 30, GRAY);
+        DrawText("Nuevo Elemento:", screenWidth - 200, 55, 12, BLACK);
+        DrawText(inputValue, screenWidth - 100, 50, 12, BLACK);
+        if (CheckCollisionPointRec(GetMousePosition(), Rectangle{screenWidth - 90, 50, 70, 30}) && IsMouseButtonPressed(MOUSE_LEFT_BUTTON))
+        {
+            // Agrega el nuevo elemento al MaxHeap
+            maxHeap.push_back(newElement);
+            n = maxHeap.size();
+
+            // Aplica heapify para reorganizar el árbol
+            for (int i = n / 2 - 1; i >= 0; i--) {
+                // Aplica heapify descendente
+                int currentIndex = i;
+                while (2 * currentIndex + 1 < n) {
+                    int childIndex = 2 * currentIndex + 1;
+                    if (childIndex + 1 < n && maxHeap[childIndex + 1] > maxHeap[childIndex]) {
+                        childIndex++;
+                    }
+                    if (maxHeap[currentIndex] < maxHeap[childIndex]) {
+                        std::swap(maxHeap[currentIndex], maxHeap[childIndex]);
+                        currentIndex = childIndex;
+                    } else {
+                        break;
+                    }
+                }
+            }
+        }
+
+        EndDrawing();
+    }
+
+    // Cierra la ventana al salir
+    CloseWindow();
+
+    return 0;
+}
