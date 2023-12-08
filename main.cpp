@@ -1,13 +1,18 @@
 #include <raylib.h>
 #include <vector>
-#include <mutex>
-#include <condition_variable>
 #include <string>
 #include <cstring>
 #include <time.h>
-#include <thread>
+
+//Aqui se puede asignar a que resolución quieres trabajar la visualización
+
+//Este es el largo del la ventana
 const int screenWidth = 1900;
+//Este es la altura de la ventana
 const int screenHeight = 950;
+//Se pueden modificar al gusto de cada quiens
+
+//Este es mi propio Pair
 template <class T, class K>
 struct Pair
 {
@@ -22,18 +27,20 @@ private:
     int n;
     std::vector<int> arrayOrigin;                                  // Vector para guardar los valores array origial
     std::vector<int> tree;                                         // Vector array para formar el arbol BIT
+    //Los atributos de debajo de aqui son unicamente para la visualización del arbol BIT en la interfaz grafica
     std::vector<Pair<int, int>> coordenadas;                       // Para guardar las coordenadas de los nodos
     std::vector<Pair<int, Pair<int, int>>> coordParents;           // Todos los nodos que son padres con sus coordendas ->
-    std::vector<Pair<Pair<int, int>, Pair<int, int>>> coordLineas; //
-    std::vector<Pair<int, Pair<int, int>>> levels;
+    std::vector<Pair<Pair<int, int>, Pair<int, int>>> coordLineas; //Vector para crear las aristas o lineas que conectan los nodos
+    std::vector<Pair<int, Pair<int, int>>> levels; //Vector para calcular los niveles del arbol y asi evitar cubrimiento de otro nodo al momento de dibujar
     std::vector<Color> colors;
     std::vector<int> brands;
     std::vector<Color> colorsArrayOrigin;
+
+
     // Encontrar el siguiente indice que tiene el bit menos significativo
     int FindNextIndexBITLessSignificant(int index)
     {
         // Agarra el binario y le resta el bit menos significativo
-
         return index + (index & -index);
     }
     // Encontrar el anterior indice qu  e tiene el bit menos significativo
@@ -47,6 +54,7 @@ private:
         return i & -i;
     }
 
+    //Esta función se usa principalmente para saber el nodo a donde debe conectarse por medio de una arista al nodo padre (unicamente para el proceso de dibujo)
     int parentIsExists(int i)
     {
         int nx = coordParents.size();
@@ -60,6 +68,10 @@ private:
         return -1;
     }
 
+
+    //Esta función tiene como uso principal saber en cuantos niveles el arbol ya se esta construyendo , a lo que podria llamarse altura en un arbol binario,
+    //esta función es implementado tambien para evitar que los nodos ubicados en ejes X y un eje Y más profundo lleguen a solaparse, avisandome si existira
+    //un nuevo nivel más abajo es decir si mis nodos anteriores se encontraban en Eje Y (250) entonces el nuevo nivel seria Eje Y (350), ayudandome de esa manera
     int searchLevel(int levelY)
     {
         for (int i = 0; i < static_cast<int>(levels.size()); i++)
@@ -72,17 +84,22 @@ private:
         return -1;
     }
 
+
+    //Este es la función que se encargar de construir el BITTREE O FenwickTree
     void ConstructionBITree(std::vector<int> sourceArray)
-    {
+    {   
+
+        //Inicializamos los atributos necesarios para comenzar a dibujar nuestro bittree
         for (int i = 0; i < n; i++)
         {
             coordenadas.push_back(Pair(0, 0));
         }
-        // VectordeColor
         this->colors = std::vector(n, BLUE);
         this->arrayOrigin = sourceArray;
         this->colorsArrayOrigin = std::vector(arrayOrigin.size(), BLUE);
         int sizeSource = static_cast<int>(sourceArray.size());
+
+        //Empezamos a construir nuestro BITTREE
         for (int i = 0; i < sizeSource; i++)
         {
             update(i, sourceArray[i]);
@@ -127,6 +144,7 @@ public:
         ConstructionBITree(sourceArray);
     }
 
+    //Update del fenwick Tree en tiempo log(n)
     void update(int index, int delta)
     {
         index = index + 1; // 12 , 13 , [0,[1---------]]
@@ -137,6 +155,7 @@ public:
         }
     }
 
+    //Suma de un elemento hasta un indice en tiempo log(n)
     int prefixSum(int index)
     {
         int sum = 0;
@@ -171,8 +190,10 @@ public:
         return tree;
     }
 
-    // DIBUJAR LOS NODOS Y LAS LINEAS
-    void DrawTree2()
+    //DrawTree2 se encarga principalmente de hacer los calculos para saber a que padre debe apuntar cada nodo y al mismo tiempo donde ubicar al nodo en
+    //la interfaz grafica, imaginemos que en algun momento los nodos se encuentran muy cerca y posiblemente puedan solaparse, esta función internemanete se encarga
+    // de verificar que cuando esten a punto de solaparse se agreguen unos cuantos puntos al eje X para evitarlo y que se siga viendo de manera visible
+    void calculando_CoordenadasDibujo()
     {
         for (int i = 0; i < n; i++)
         {
@@ -184,8 +205,6 @@ public:
                 coordenadas[0] = Pair(screenWidth / 2, 80);
                 colors[0] = RED;
                 levels.push_back(Pair(80, Pair(screenWidth / 2, 80)));
-                // DrawCircle(coordenadas[0].first, coordenadas[0].second, 16, YELLOW);
-                // DrawText(std::to_string(tree[i]).c_str(), coordenadas[0].first, coordenadas[0].second, 20, RED);
             }
             else
             {
@@ -220,11 +239,8 @@ public:
                     colors[i] = RED;
                     // Aqui colocamos la ultima posición en la que se encuentra el hijo del parent y el parent lo añadimos a la lista de coordParents
                     coordParents.push_back(Pair(FindPrevIndexBITLessSignificant(i), Pair(newX, newY)));
-                    // Terminado ahora dibujamos
+                    // Pusheamos de donde a donde se creara la linea que conectara al hijo al padre
                     coordLineas.push_back(Pair(Pair(newX, newY), Pair(coordDest.first, coordDest.second)));
-                    // DrawCircle(newX, newY, 16, YELLOW);
-                    // DrawText(std::to_string(tree[i]).c_str(), newX, newY, 8, RED);
-                    // DrawLine(newX, newY, coordDest.first, coordDest.second, WHITE);
                 }
 
                 if (indexParent != -1)
@@ -249,6 +265,10 @@ public:
             // Pair<int, int> coordParentX = coordenadas[FindPrevIndexBITLessSignificant(i)];
         }
     }
+
+
+    //Aqui limpiamos completamente todos nuestro arbol al momento, tanto el tree principal y los otros vectores para ubicarlos nuevamente cuando se active el boton 
+    //de añadir elemento
     void cleanDraw()
     {
         this->n = 0;
@@ -259,7 +279,10 @@ public:
         colors.clear();
         levels.clear();
     }
-    void draw3()
+
+    //Sirve unicamente para dibujar el arbol usando las coordenadas para saber donde pintar los nodos del arbol, usando posiciones , claro que tambien
+    //se usan los textos para poder diferenciarlos
+    void Dibujar()
     {
 
         for (int i = 0; i < static_cast<int>(coordLineas.size()); i++)
@@ -287,14 +310,18 @@ public:
     {
         colorsArrayOrigin[index] = color;
     }
+
+    //Coloreamos todos los nodos que han sido usados en nuestro prefix Sum de un color AZUL
     void coloringLabels()
     {
         for (int i = 0; i < static_cast<int>(brands.size()); i++)
         {
             colors[brands[i]] = BLUE;
-            // WaitTime(2);
         }
     }
+
+    //Limpiamos las etiquetas de colores a su color original
+    // y tambien el array original lo cambiamos a su color original
     void cleanColoring()
     {
         for (int i = 0; i < static_cast<int>(brands.size()); i++)
@@ -304,11 +331,14 @@ public:
         brands.clear();
         colorsArrayOrigin = std::vector(arrayOrigin.size(), BLUE);
     }
+
+    //Obtener size de fenwicktree
     int getN()
     {
         return n;
     }
 
+    //Suma por rango usando nuestra anterior funcion PrefixSum haciendo la diferencia entre la suma hasta el indice maximo y restandole la suma hasta el indice minimo
     int range_query(int left, int right)
     {
         return prefixSum(right) - prefixSum(left - 1);
@@ -326,6 +356,8 @@ typedef enum
     COLOR_CONTRAST
 } ImageProcess;
 
+
+//Array que guarda el nombre de cada boton usando un array de cadena de caracteres
 static const char *processText[] = {
     "CONSTURIR BITREE",
     "OCULTAR BITREE",
@@ -335,6 +367,7 @@ static const char *processText[] = {
     "BORRAR ELEMENTO",
     "SUMA RANGO"};
 
+//Verificar que numero de boton le ha dado click el usuario
 int verificarIfExistsClick(std::vector<int> vectorVerify, int searchValue)
 {
     for (int i = 0; i < static_cast<int>(vectorVerify.size()); i++)
@@ -346,8 +379,7 @@ int verificarIfExistsClick(std::vector<int> vectorVerify, int searchValue)
     }
     return -1;
 }
-// std::mutex mtx;
-// td::condition_variable cv;
+
 
 #define MAX_INPUT_CHARS 4
 
@@ -362,8 +394,9 @@ int main()
     srand(time(nullptr));
     SetTargetFPS(60);
     PlayMusicStream(music);
+
+
     int currentProcess = NONE;
-    // bool textureReload = false;
 
     Rectangle toogleRecs[NUM_PROCESSES] = {0};
     int mouseHoverRec = -1;
@@ -377,6 +410,9 @@ int main()
         // xPosArray = rectX.x;
         yPosArray += 50 * 2;
     }
+
+
+    //Creación de array de chars para el contenido de la caja de texto
     char inputText1[MAX_INPUT_CHARS + 1] = "\0";
     char inputText2[MAX_INPUT_CHARS + 1] = "\0";
     char inputText3[MAX_INPUT_CHARS + 1] = "\0";
@@ -386,12 +422,13 @@ int main()
     int value3 = -1;
     int value4 = -1;
 
+
+    //Creación de Cajas de Texto
     Rectangle textBox1 = {screenWidth / 2.0f - screenWidth / 4.0f, screenHeight - 230, 100, 50};
     Rectangle textBox2 = {(float)textBox1.x + 200, screenHeight - 230, 100, 50};
     Rectangle textBox3 = {(float)toogleRecs[2].width + 50, (float)toogleRecs[2].y, 80, 50};
     Rectangle textBox4 = {(float)textBox3.x + 90, (float)textBox3.y, 80, 50};
 
-    // Rectangle submitButton = {screenWidth / 2.0f, screenHeight - 200, 120, 50};
     bool mouseOnText1 = false;
     bool mouseOnText2 = false;
     bool mouseOnText3 = false;
@@ -407,43 +444,7 @@ int main()
     int size = array.size();              // 1
     FenwickTree fenwickTree(size, array); // el n para el arbol por ahora
 
-    // seria 1+1 = 2 -> BITREE [0,0]
-    // Construction BITREE[0,0]
-    // lleno mis coordenadas con n =2
-    //  coords[(0,0),(0,0)]
-    //  colors[BLUE,BLUE]
-    //  guardao el array original en mi clase
-    //  arrayOrigin = soruceArray;
-    //  Ahora construyo mi BITTREE con el tamanio del array original
-    //  nsizearrayorigin = array.originsize = 1;
-    //  Construyo mi BITTREE
-    //
 
-    // Hago una limpieza de todo;
-    //  n = 0,limpio mi tree,limpio mis coords,limpiomisPrents,mislineas
-    //  limpio mis colors y limpio mis levels
-    // Si yo agregara un elemento a mi array original {2} a {2,5}
-    // Activo Reconstruction
-    // Recurdo que mi array original lo tengo guardado , pusheo el elemento,
-    // recuerda que lo tengo todo limpio
-    //{2,5 } y ya esta pusheado, entones yo
-    //  EL NUEVO tamaño de mi bitree sera 3 porque tengo 2 elementos [0,0,0]
-    //  lleno todas las coordenadas, ahora crearia 3 coordenadas
-    //  lleno los colors [BLUE,BLUE,BLUE] seria los nodos por el momento
-    // Ahora actualizamos nuestro tree
-    // Con los valores de nuestro array pusheado y con su nuevo tamanio
-    // Luego de hacer ese upgrade
-    // Ahora volvemos a dibujar las coordenadas,levels,Lineas
-
-    // Construye el árbol Fenwick con las actualizaciones
-    /*
-    for (int i = 0; i < size; ++i)
-    {
-        fenwickTree.update(i, array[i]);
-    }
-    */
-
-    // fenwickTree.DrawTree2();
     std::vector<int> ClicksX;
     // Bucle principal
     bool IsConstruction = false;
@@ -456,12 +457,13 @@ int main()
     while (!WindowShouldClose())
     {
         UpdateMusicStream(music);
-        // std::unique_lock<std::mutex> lock(mtx);
 
         mouseOnText1 = CheckCollisionPointRec(GetMousePosition(), textBox1);
         mouseOnText2 = CheckCollisionPointRec(GetMousePosition(), textBox2);
         mouseOnText3 = CheckCollisionPointRec(GetMousePosition(), textBox3);
         mouseOnText4 = CheckCollisionPointRec(GetMousePosition(), textBox4);
+
+
         if (mouseOnText1 || mouseOnText2)
         {
             SetMouseCursor(MOUSE_CURSOR_IBEAM);
@@ -525,18 +527,6 @@ int main()
             framesCounter2 = 0;
         }
 
-        /*
-        if (mouseOnText1 || mouseOnText2)
-        {
-            if (framesCounter / 30 % 2 == 0) // Ajusta el divisor para cambiar la velocidad del parpadeo
-            {
-                char *currentInputText = (mouseOnText1) ? inputText1 : inputText2;
-                DrawText("_",(int)textBox1.x + 8 + MeasureText(currentInputText, 40), (int)textBox1.y + 12, 40, MAROON);
-            }
-        }
-        */
-        // bool clickOnSubmit = CheckCollisionPointRec(GetMousePosition(), submitButton);
-
         for (int i = 0; i < NUM_PROCESSES; i++)
         {
             if (CheckCollisionPointRec(GetMousePosition(), toogleRecs[i]) || (IsKeyPressed(KEY_ENTER) && (i == currentProcess)))
@@ -572,10 +562,12 @@ int main()
                     else if (i == 5)
                     {
                         buttomPressed = 5;
+                        //Codigo para el caso 5
                     }
                     else if (i == 6)
                     {
                         buttomPressed = 6;
+                        //Codigo para el caso 6
                     }
                 }
 
@@ -590,7 +582,7 @@ int main()
                         if (!IsConstruction)
                         {
                             // Construimos el árbol BIT
-                            fenwickTree.DrawTree2();
+                            fenwickTree.calculando_CoordenadasDibujo();
                             // Decimos que ya está construido
                             IsConstruction = true;
                         }
@@ -599,15 +591,7 @@ int main()
                     }
                 }
                 else if (buttomPressed == 1)
-                { /*
-                  int validationNoDraw = verificarIfExistsClick(ClicksX, 0);
-                  if (i == 1 && validationNoDraw != -1 && IsConstruction)
-                  {
-                      // Se elimina el click 0 para que no se vea el arbol
-                      //ClicksX.erase(ClicksX.begin() + validationNoDraw);
-                      ClicksX.clear();
-                  }
-                  */
+                {
                     if (i == 1 && IsConstruction)
                     {
                         ClicksX.clear();
@@ -615,71 +599,6 @@ int main()
                 }
                 else if (buttomPressed == 2)
                 {
-                    // Limpio el arbol de coordenadas,dibujos y demas
-                    /*
-                    ClicksX.clear();
-                    if (IsConstruction == true && strlen(inputText3) <= 0)
-                    {
-                        // No dibujo el arbol vacio porque va a ser tan rapido que no se va a ver
-
-                        // Añado un nuevo elemento al array principal y reconstruyo
-                        if (pruebaX <= static_cast<int>(pruebas.size()) - 1)
-                        {
-                            //
-                            fenwickTree.cleanDraw();
-                            fenwickTree.push(pruebas[pruebaX]); // Push and Reconstrucion
-                            pruebaX++;
-                            fenwickTree.DrawTree2();
-                            ClicksX.push_back(i);
-                        }
-                        else
-                        {
-                            // Limpieza
-                            fenwickTree.cleanDraw();
-                            fenwickTree.push(1 + rand() % 9 + 1 - 1);
-                            pruebaX++;
-                            fenwickTree.DrawTree2();
-                            ClicksX.push_back(i);
-                        }
-                        // Y listo ya tengo listo mi nuevo arbol con el elemento agregado
-                        // Solo queda que cuando llegue a dibujarlo
-                    }
-                    else
-                    {
-                        if (IsConstruction == false && strlen(inputText3) <= 0)
-                        {
-                            fenwickTree.cleanDraw();
-                            fenwickTree.push(1 + rand() % (9 + 1 - 1));
-                            // Si en caso aun no se habia construido el arbol
-                            // Colocamos que ya se construyo
-                            fenwickTree.DrawTree2();
-                            IsConstruction = true;
-                            ClicksX.push_back(i);
-                        }
-                        else if(IsConstruction == false && strlen(inputText3) > 0)
-                        {
-                            value1 = atoi(inputText1);
-                            fenwickTree.cleanDraw();
-                            fenwickTree.push(value1);
-                            // Si en caso aun no se habia construido el arbol
-                            // Colocamos que ya se construyo
-                            fenwickTree.DrawTree2();
-                            IsConstruction = true;
-                            ClicksX.push_back(i);
-                        }
-                        else if(IsConstruction == true && strlen(inputText3) > 0)
-                        {
-                            value1 = atoi(inputText1);
-                            fenwickTree.cleanDraw();
-                            fenwickTree.push(value1);
-                            // Si en caso aun no se habia construido el arbol
-                            // Colocamos que ya se construyo
-                            fenwickTree.DrawTree2();
-                            //IsConstruction = true;
-                            ClicksX.push_back(i);
-                        }
-                    }
-                    */
                     ClicksX.clear();
                     if (IsConstruction == true)
                     {
@@ -691,7 +610,7 @@ int main()
                                 fenwickTree.cleanDraw();
                                 fenwickTree.push(pruebas[pruebaX]); // Push and Reconstrucion
                                 pruebaX++;
-                                fenwickTree.DrawTree2();
+                                fenwickTree.calculando_CoordenadasDibujo();
                                 ClicksX.push_back(i);
                             }
                             else
@@ -699,7 +618,7 @@ int main()
                                 // Limpieza
                                 fenwickTree.cleanDraw();
                                 fenwickTree.push(1 + rand() % 9 + 1 - 1);
-                                fenwickTree.DrawTree2();
+                                fenwickTree.calculando_CoordenadasDibujo();
                                 ClicksX.push_back(i);
                             }
                         }
@@ -718,7 +637,7 @@ int main()
                                 value3 = atoi(inputText3);
                                 fenwickTree.cleanDraw();
                                 fenwickTree.push(value3);
-                                fenwickTree.DrawTree2();
+                                fenwickTree.calculando_CoordenadasDibujo();
                                 ClicksX.push_back(i);
                             }
                             else if (strlen(inputText4) > 0 && strlen(inputText3) <= 0)
@@ -728,7 +647,7 @@ int main()
                                 value4 = atoi(inputText4);
                                 fenwickTree.cleanDraw();
                                 fenwickTree.push(value4-2*value4);
-                                fenwickTree.DrawTree2();
+                                fenwickTree.calculando_CoordenadasDibujo();
                                 ClicksX.push_back(i);
                             }
                         }
@@ -743,7 +662,7 @@ int main()
                                 fenwickTree.cleanDraw();
                                 fenwickTree.push(pruebas[pruebaX]); // Push and Reconstrucion
                                 pruebaX++;
-                                fenwickTree.DrawTree2();
+                                fenwickTree.calculando_CoordenadasDibujo();
                                 IsConstruction = true;
                                 ClicksX.push_back(i);
                             }
@@ -752,7 +671,7 @@ int main()
                                 // Limpieza
                                 fenwickTree.cleanDraw();
                                 fenwickTree.push(1 + rand() % 9 + 1 - 1);
-                                fenwickTree.DrawTree2();
+                                fenwickTree.calculando_CoordenadasDibujo();
                                 IsConstruction = true;
                                 ClicksX.push_back(i);
                             }
@@ -771,7 +690,7 @@ int main()
                                 value3 = atoi(inputText3);
                                 fenwickTree.cleanDraw();
                                 fenwickTree.push(value3 - 2*value3);
-                                fenwickTree.DrawTree2();
+                                fenwickTree.calculando_CoordenadasDibujo();
                                 IsConstruction = true;
                                 ClicksX.push_back(i);
                             }
@@ -782,7 +701,7 @@ int main()
                                 value4 = atoi(inputText4);
                                 fenwickTree.cleanDraw();
                                 fenwickTree.push(value4 - 2*value4);
-                                fenwickTree.DrawTree2();
+                                fenwickTree.calculando_CoordenadasDibujo();
                                 IsConstruction = true;
                                 ClicksX.push_back(i);
                             }
@@ -836,7 +755,7 @@ int main()
                     {
                         fenwickTree.cleanDraw();
                         fenwickTree.pop();
-                        fenwickTree.DrawTree2();
+                        fenwickTree.calculando_CoordenadasDibujo();
                         ClicksX.push_back(i);
                     }
                 }
@@ -874,7 +793,6 @@ int main()
                 if (IsMouseButtonReleased(MOUSE_BUTTON_LEFT) || (IsKeyPressed(KEY_ENTER)))
                 {
                     currentProcess = i;
-                    // textureReload = true;
                 }
                 break;
             }
@@ -889,7 +807,6 @@ int main()
             {
                 currentProcess = 0;
             }
-            // textureReload = true;
         }
         else if (IsKeyPressed(KEY_UP))
         {
@@ -904,6 +821,7 @@ int main()
         BeginDrawing();
         ClearBackground(BLACK);
 
+        //Dibujo los botones
         for (int i = 0; i < NUM_PROCESSES; i++)
         {
             DrawRectangleRec(toogleRecs[i], ((i == currentProcess) || (i == mouseHoverRec)) ? SKYBLUE : LIGHTGRAY);
@@ -957,9 +875,6 @@ int main()
         }
         DrawText("Max :", (int)textBox2.x - 80, (int)textBox2.y + 8, ((int)textBox2.height) / 2 + 5, WHITE);
         DrawText(inputText2, (int)textBox2.x + 5, (int)textBox2.y + 8, ((int)textBox2.height) / 2 + 5, MAROON);
-        // DrawRectangleRec(submitButton, DARKGRAY);
-        // DrawRectangleLines((int)submitButton.x, (int)submitButton.y, (int)submitButton.width, (int)submitButton.height, BLACK);
-        // DrawText("Submit", (int)submitButton.x + (int)submitButton.width / 4, (int)submitButton.y + 10, 20, WHITE);
 
         //
         std::string textilSum = "Suma Indice : " + std::to_string((indexSumX != -1) ? indexSumX : -1);
@@ -1023,9 +938,6 @@ int main()
         DrawText("Fenwick Tree Visualization", 20, 20, 25, WHITE);
         DrawLine(18, 42, screenWidth - 18, 42, WHITE);
         // Dibuja el Fenwick Tree en la ventana
-
-        // fenwickTree.draw3();
-
         for (int i = 0; i < static_cast<int>(ClicksX.size()); i++)
         {
             switch (ClicksX[i])
@@ -1033,27 +945,25 @@ int main()
             case 0:
                 if (IsConstruction == true)
                 {
-                    fenwickTree.draw3();
+                    fenwickTree.Dibujar();
                 }
                 break;
             // El caso 1 ya no es necesario debido que por defecto lo va a ocultar
             case 2:
                 // Dibujo el arbol ya reconstruido con el nuevo elemento
-                fenwickTree.draw3();
+                fenwickTree.Dibujar();
                 break;
             case 3:
-                fenwickTree.draw3(); // Dibuja antes de la pausa
-                // fenwickTree.cleanColoring(); // Limpia después de la pausa
-                // ClicksX.erase(ClicksX.begin() + verificarIfExistsClick(ClicksX, 3));
+                fenwickTree.Dibujar(); 
                 break;
             case 4:
-                fenwickTree.draw3();
+                fenwickTree.Dibujar();
                 break;
             case 5:
-                fenwickTree.draw3();
+                fenwickTree.Dibujar();
                 break;
             case 6:
-                fenwickTree.draw3();
+                fenwickTree.Dibujar();
                 break;
             }
         }
