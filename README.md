@@ -2,10 +2,29 @@
 - Diego Orlando Bustamante Palomino
 - Cristopher Meneses
 - Renzo Acervo
+---
+## Fenwick Tree (Árbol de Fenwick):
 
-Solamente para ordenar un poco el README y que sea más entendible para futuros visitantes del repositorio debo aclarar que para este proyecto se utilizo la libreria grafica RayLib usando mayormente para la creación de interfaces visuales para videojuegos con posibilidades a extenderse al mundo 3D, al mismo tiempo si el profesor Heider Sanchez se encuentra viendo esto debo aclarar tambien que se seguira las recomendaciones de Enrique Flores asesor del curso de Algoritmos y Estructuras de datos , el cual me dio una recomendación para que el codigo se más entendible, ponerle nombres a las funciones principales para que sea más entedible y comentarios y es lo que se ha hecho, *NO SE HA CAMBIADO NADA DEL CODIGO , UNICAMENTE SE CAMBIO DE NOMBRE A LAS FUNCIONES PARA QUE SEA MÁS ENTENDIBLE A LA VISTA DEL USUARIO*, espero pueda comprender nuestras intenciones para que le sea más sencillo entender nuestra logica al momento de programar la visualización de la estructura de datos Fenwick Tree.\
-\
-** Si en caso desea revisar los commits, no tenemos ninguna objeción ya que NO MODIFICAMOS PARA NADA EL CODIGO solo pusimos COMENTARIOS Y CAMBIAMOS DE NOMBRE A 2 FUNCIONES UNICAMENTE, la función Draw3 que sirve para dibujar el arbol Fenwick ahora tiene el nombre de Dibujar y la funcion DrawTree2 que sirve para calcular las coordenadas de donde se situaran los dibujos en la ventana gráfica tiene el nombre Calculando_CoordenadasDibujo**
+El Fenwick Tree, también conocido como árbol BIT (Binary Indexed Tree), es una estructura de datos eficiente diseñada para realizar operaciones de suma acumulativa en un conjunto de elementos, especialmente útil para actualizar y consultar rangos de datos en un arreglo de manera eficiente.
+
+**Características clave:**
+- Eficiencia en operaciones de suma acumulativa.
+- Optimizado para actualizaciones y consultas en rangos específicos.
+- Utilizado en problemas de programación competitiva y optimización.
+
+## Raylib - Librería Gráfica:
+
+Raylib es una librería gráfica y de juegos escrita en C, diseñada para ser simple y fácil de usar. Destaca por su rendimiento y versatilidad, siendo adecuada tanto para principiantes como para desarrolladores experimentados.
+
+**Características destacadas:**
+- Soporte multiplataforma: Windows, Linux, macOS, Android, y más.
+- Orientada a la simplicidad y eficiencia.
+- Funciones para gráficos 2D y 3D, entrada de usuario, sonido, y más.
+- Documentación completa y activa comunidad de usuarios.
+
+## Funciones en el codigo de la GUI
+- Function 1:
+- Function 2:
 ![image](FenwickTreeVisualizationTest.PNG)
 - Muchas Gracias por sus clases durante este ciclo 2023-2
 - MUCHOS EXITOS
