@@ -1,7 +1,6 @@
 # FenwickTreeVisualization
-- Diego Orlando Bustamante Palomino
-- Cristopher Meneses
-- Renzo Acervo
+## Author:
+- NewRenTL(Sierpe)
 ---
 ## Fenwick Tree (Árbol de Fenwick):
 
