@@ -1,6 +1,6 @@
 # FenwickTreeVisualization
 ## Author:
-- `**New Ren TL (Sierpe)**`
+- `New Ren TL (Sierpe)`
 ---
 ## Fenwick Tree (Árbol de Fenwick):
 
